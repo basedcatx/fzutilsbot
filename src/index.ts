@@ -1,7 +1,7 @@
 import { Client, Collection, GatewayIntentBits } from "discord.js";
 import { BotConfig } from "./config";
 import fs from "node:fs";
-import path from "node:path";
+import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ClientWithCollection } from "./types";
 
@@ -15,8 +15,10 @@ const client = new Client({
 });
 
 (client as ClientWithCollection).messageCounts = new Collection();
+(client as ClientWithCollection).interactionCommands = new Collection();
 
 await load_all_events();
+await load_all_commands();
 
 client
   .login(BotConfig.env.BOT_API_KEY)
@@ -24,6 +26,24 @@ client
   .catch((err) => {
     console.error(err);
   });
+
+async function load_all_commands() {
+  const command_dirs = fs.readdirSync(path.join(__dirname, "commands"), {
+    recursive: true,
+    withFileTypes: true,
+  });
+
+  for (const cmd of command_dirs) {
+    if (!cmd.isFile()) continue;
+    if (extname(cmd.name) !== ".ts") continue;
+
+    const c = (
+      await import(pathToFileURL(path.join(cmd.parentPath, cmd.name)).href)
+    ).default;
+
+    (client as ClientWithCollection).interactionCommands.set(c.name, c);
+  }
+}
 
 async function load_all_events() {
   const event_dirs = fs.readdirSync(path.join(__dirname, "events"), {
