@@ -3,7 +3,8 @@ import { BotConfig } from "./config";
 import fs from "node:fs";
 import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { ClientWithCollection } from "./types";
+import type { ClientWithCollection, SlashCommandType } from "./types";
+import { createClient } from "redis";
 
 const client = new Client({
   intents: [
@@ -14,8 +15,22 @@ const client = new Client({
   ],
 });
 
-(client as ClientWithCollection).messageCounts = new Collection();
-(client as ClientWithCollection).interactionCommands = new Collection();
+export const redisClient = createClient({
+  username: BotConfig.env.REDIS_USERNAME,
+  password: BotConfig.env.REDIS_PASSWORD,
+  socket: {
+    host: BotConfig.env.REDIS_HOST,
+    port: 13868,
+  },
+});
+
+await redisClient.connect();
+redisClient.on("error", (err) => console.error(err));
+
+{
+  (client as ClientWithCollection).messageCounts = new Collection();
+  (client as ClientWithCollection).interactionCommands = new Collection();
+}
 
 await load_all_events();
 await load_all_commands();

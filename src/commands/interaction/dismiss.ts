@@ -1,28 +1,26 @@
 import {
-  type Interaction,
+  Client,
   ContainerBuilder,
-  MessageFlags,
   SlashCommandBuilder,
+  type Interaction,
 } from "discord.js";
-import type { ClientWithCollection, SlashCommandType } from "../../types";
+import type { SlashCommandType } from "../../types";
 
 const command = new SlashCommandBuilder()
-  .setName("ping")
-  .setDescription("Pings the bot to check it's status");
+  .setName("dismiss")
+  .setDescription(
+    "Dismisses a member from your gang. You must be a gang leader",
+  );
 
 const cmd: SlashCommandType = {
   ...command,
   cooldown: 5,
-  name: "ping",
-  async execute(_: ClientWithCollection, interaction: Interaction) {
+  async execute(_: Client, interaction: Interaction) {
     if (!interaction.isChatInputCommand()) return;
-    const now = Date.now();
-    interaction.reply({
-      components: [pingComponent(Date.now() - now, _.ws.ping)],
-      flags: MessageFlags.IsComponentsV2,
-    });
+    // would handle this later on
   },
 };
+
 
 function pingComponent(diff: number, wsping: number) {
   return new ContainerBuilder().addTextDisplayComponents((td) =>

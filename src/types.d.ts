@@ -2,7 +2,7 @@ import type {
   Client,
   Collection,
   CommandInteraction,
-  Interaction,
+  type Interaction,
   Message,
   Snowflake,
 } from "discord.js";
@@ -21,4 +21,15 @@ export interface ClientWithCollection extends Client {
       ) => Promise<void>;
     }
   >;
+}
+
+export interface SlashCommandType {
+  name: string;
+  description: string;
+  cooldown: number;
+  execute: (client: ClientWithCollection, interaction: any) => Promise<void>;
+}
+
+export const enum RedisStore {
+  MessageCount = "msgcount",
 }

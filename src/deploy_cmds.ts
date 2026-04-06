@@ -2,13 +2,13 @@ import { readdirSync } from "fs";
 import { pathToFileURL } from "node:url";
 import path from "node:path";
 import { REST, Routes } from "discord.js";
-import { BotConfig } from "../config";
+import { BotConfig } from "./config";
 
 async function load_commands() {
-  const commands: any[] = [];
+  const commands = [];
 
   const command_dirs = readdirSync(
-    pathToFileURL(path.join(__dirname, "..", "commands")),
+    pathToFileURL(path.join(__dirname, "commands")),
     {
       withFileTypes: true,
       recursive: true,
@@ -38,6 +38,7 @@ async function load_commands() {
 
   return commands;
 }
+
 
 const rest = new REST().setToken(BotConfig.env.BOT_API_KEY);
 
