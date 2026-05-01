@@ -15,12 +15,14 @@ const client = new Client({
   ],
 });
 
+console.log(BotConfig.env);
+
 export const redisClient = createClient({
   username: BotConfig.env.REDIS_USERNAME,
   password: BotConfig.env.REDIS_PASSWORD,
   socket: {
-    host: BotConfig.env.REDIS_HOST,
-    port: 13868,
+    host: BotConfig.isProduction ? BotConfig.env.REDIS_HOST : "localhost",
+    port: 6379,
   },
 });
 

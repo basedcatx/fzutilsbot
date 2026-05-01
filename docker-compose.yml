@@ -1,0 +1,32 @@
+services:
+  app:
+    build: .
+    container_name: fzutils
+    env_file:
+      - .env
+    environment: 
+      - PRODUCTION=true
+    depends_on:
+      - redis-db
+    networks:
+      - fznet
+    ports:
+      - "3000:3000"
+
+  redis-db:
+    image: redis:latest
+    container_name: fzstorage
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - fznet
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  fznet:
