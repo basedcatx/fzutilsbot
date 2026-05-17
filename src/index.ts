@@ -15,7 +15,6 @@ const client = new Client({
   ],
 });
 
-console.log(BotConfig.env);
 
 export const redisClient = createClient({
   username: BotConfig.env.REDIS_USERNAME,
@@ -57,6 +56,7 @@ async function load_all_commands() {
     const c = (
       await import(pathToFileURL(path.join(cmd.parentPath, cmd.name)).href)
     ).default;
+
 
     (client as ClientWithCollection).interactionCommands.set(c.name, c);
   }
