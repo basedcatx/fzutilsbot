@@ -3,7 +3,7 @@ import { BotConfig } from "./config";
 import fs from "node:fs";
 import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { ClientWithCollection, SlashCommandType } from "./types";
+import type { ClientWithCollection } from "./types";
 import { createClient } from "redis";
 
 const client = new Client({
