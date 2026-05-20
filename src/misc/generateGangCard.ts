@@ -1,18 +1,6 @@
 import Konva from "konva";
 import "konva/skia-backend";
-
-const CYBER_THEME = {
-  width: 900,
-  height: 520,
-  bgDark: "#0D1114", // Core card background
-  bgDarker: "#080B0D", // Bottom footer blocks
-  borderCyan: "#1F313A", // Grid panel boundaries
-  neonCyan: "#00D2FF", // Accent illumination text & graphs
-  neonRed: "#FF3B47", // Critical warnings/alerts
-  neonYellow: "#FFD200", // Credit points currency indicator
-  textGray: "#5F7582", // Subtitles & metadata labels
-  textWhite: "#FFFFFF",
-};
+import { CARD_CONFIG } from "./helper";
 
 export async function generateGangCard({
   name,
@@ -28,17 +16,17 @@ export async function generateGangCard({
   nextInLine: { name: string; leader: string };
 }) {
   const stage = new Konva.Stage({
-    width: CYBER_THEME.width,
-    height: CYBER_THEME.height,
+    width: CARD_CONFIG.dimensions.modalWidth,
+    height: CARD_CONFIG.dimensions.modalHeight,
   });
 
   const mainLayer = new Konva.Layer();
   stage.add(mainLayer);
 
   const baseFrame = new Konva.Rect({
-    width: CYBER_THEME.width,
-    height: CYBER_THEME.height,
-    fill: "#060809",
+    width: CARD_CONFIG.dimensions.modalWidth,
+    height: CARD_CONFIG.dimensions.modalHeight,
+    fill: CARD_CONFIG.colors.bgApp,
   });
 
   mainLayer.add(baseFrame);
@@ -49,8 +37,8 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 900,
       height: 110,
-      fill: CYBER_THEME.bgDark,
-      stroke: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.bgCard,
+      stroke: CARD_CONFIG.colors.bgBadge,
       strokeWidth: 1,
     }),
   );
@@ -62,7 +50,7 @@ export async function generateGangCard({
       y: 30,
       fontSize: 11,
       fontStyle: "bold",
-      fill: CYBER_THEME.textGray,
+      fill: CARD_CONFIG.colors.textMuted,
       tracking: 2,
     }),
   );
@@ -75,7 +63,7 @@ export async function generateGangCard({
       y: 48,
       fontSize: 36,
       fontStyle: "italic bold",
-      fill: CYBER_THEME.textWhite,
+      fill: CARD_CONFIG.colors.textWhite,
     }),
   );
 
@@ -87,8 +75,8 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 450,
       height: 140,
-      fill: CYBER_THEME.bgDark,
-      stroke: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.bgCardElevated,
+      stroke: CARD_CONFIG.colors.bgBadge,
       strokeWidth: 1,
     }),
   );
@@ -100,7 +88,7 @@ export async function generateGangCard({
       y: 28,
       fontSize: 10,
       fontStyle: "bold",
-      fill: CYBER_THEME.textGray,
+      fill: CARD_CONFIG.colors.textWhite,
       tracking: 1.5,
     }),
   );
@@ -111,7 +99,7 @@ export async function generateGangCard({
     y: 52,
     fontSize: 32,
     fontStyle: "bold",
-    fill: CYBER_THEME.textWhite,
+    fill: CARD_CONFIG.colors.textWhite,
   });
 
   commGroup.add(msgText);
@@ -123,7 +111,7 @@ export async function generateGangCard({
       y: 68,
       fontSize: 12,
       fontStyle: "bold",
-      fill: CYBER_THEME.neonCyan,
+      fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
 
@@ -147,8 +135,8 @@ export async function generateGangCard({
         fill:
           i < calculateFill()
             ? calculateFill() >= 3
-              ? CYBER_THEME.neonRed
-              : CYBER_THEME.neonCyan
+              ? CARD_CONFIG.colors.accentPrimary
+              : CARD_CONFIG.colors.accentSecondary
             : "#142830",
       }),
     );
@@ -161,8 +149,8 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 450,
       height: 140,
-      fill: CYBER_THEME.bgDark,
-      stroke: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.bgBadge,
+      stroke: CARD_CONFIG.colors.bgBadge,
       strokeWidth: 1,
     }),
   );
@@ -174,7 +162,7 @@ export async function generateGangCard({
       y: 28,
       fontSize: 10,
       fontStyle: "bold",
-      fill: CYBER_THEME.textGray,
+      fill: CARD_CONFIG.colors.textMuted,
       tracking: 1.5,
     }),
   );
@@ -186,7 +174,7 @@ export async function generateGangCard({
       y: 48,
       fontSize: 34,
       fontStyle: "bold",
-      fill: CYBER_THEME.neonCyan,
+      fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
 
@@ -197,7 +185,7 @@ export async function generateGangCard({
       y: 64,
       fontSize: 13,
       fontStyle: "bold",
-      fill: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
 
@@ -214,7 +202,7 @@ export async function generateGangCard({
       y: 102,
       fontSize: 11,
       fontStyle: "bold",
-      fill: rankInc > 0 ? "#1E8449" : CYBER_THEME.neonRed, // Green indicator trend color
+      fill: rankInc > 0 ? "#1E8449" : CARD_CONFIG.colors.accentSecondary, // Green indicator trend color
     }),
   );
 
@@ -225,8 +213,8 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 450,
       height: 140,
-      fill: CYBER_THEME.bgDark,
-      stroke: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.bgBadge,
+      stroke: CARD_CONFIG.colors.bgBadge,
       strokeWidth: 1,
     }),
   );
@@ -238,7 +226,7 @@ export async function generateGangCard({
       y: 25,
       fontSize: 10,
       fontStyle: "bold",
-      fill: CYBER_THEME.textGray,
+      fill: CARD_CONFIG.colors.textMuted,
       tracking: 1.5,
     }),
   );
@@ -268,7 +256,10 @@ export async function generateGangCard({
         y: 115 - val,
         width: 44,
         height: val,
-        fill: val >= 45 ? CYBER_THEME.neonCyan : "#263138",
+        fill:
+          val >= 45
+            ? CARD_CONFIG.colors.accentPrimary
+            : CARD_CONFIG.colors.accentSecondary,
       }),
     );
   });
@@ -280,8 +271,8 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 450,
       height: 140,
-      fill: CYBER_THEME.bgDark,
-      stroke: CYBER_THEME.borderCyan,
+      fill: CARD_CONFIG.colors.bgCardElevated,
+      stroke: CARD_CONFIG.colors.bgCard,
       strokeWidth: 1,
     }),
   );
@@ -293,7 +284,7 @@ export async function generateGangCard({
       y: 0,
       width: 4,
       height: 140,
-      fill: CYBER_THEME.neonRed,
+      fill: CARD_CONFIG.colors.accentSecondary,
     }),
   );
 
@@ -304,7 +295,7 @@ export async function generateGangCard({
       y: 35,
       fontSize: 10,
       fontStyle: "bold",
-      fill: CYBER_THEME.textGray,
+      fill: CARD_CONFIG.colors.textMuted,
       tracking: 1.5,
     }),
   );
@@ -339,7 +330,7 @@ export async function generateGangCard({
       y: 56,
       fontSize: 18,
       fontStyle: "bold",
-      fill: CYBER_THEME.textWhite,
+      fill: CARD_CONFIG.colors.textWhite,
       tracking: 1,
     }),
   );
@@ -351,7 +342,7 @@ export async function generateGangCard({
       y: 78,
       fontSize: 10,
       fontStyle: "bold",
-      fill: CYBER_THEME.neonRed,
+      fill: CARD_CONFIG.colors.accentSecondary,
     }),
   );
 
@@ -371,8 +362,7 @@ export async function generateGangCard({
       new Konva.Rect({
         width: 260,
         height: 75,
-        fill: CYBER_THEME.bgDarker,
-        stroke: "#151C21",
+        fill: CARD_CONFIG.colors.bgCard,
         strokeWidth: 1,
         cornerRadius: 2,
       }),
@@ -386,7 +376,7 @@ export async function generateGangCard({
         y: 18,
         fontSize: 9,
         fontStyle: "bold",
-        fill: CYBER_THEME.textGray,
+        fill: CARD_CONFIG.colors.textMuted,
         tracking: 1,
       }),
     );
@@ -398,7 +388,7 @@ export async function generateGangCard({
       y: 38,
       fontSize: 20,
       fontStyle: "bold",
-      fill: color || CYBER_THEME.textWhite,
+      fill: color || CARD_CONFIG.colors.textWhite,
     });
     g.add(mainVal);
 
@@ -423,7 +413,7 @@ export async function generateGangCard({
     "GANG CREDITS",
     "N/A",
     "(coming soon)",
-    CYBER_THEME.neonYellow,
+    CARD_CONFIG.colors.accentTertiary,
   );
 
   mainLayer.add(blockCredits);
