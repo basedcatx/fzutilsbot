@@ -32,3 +32,10 @@ export async function decrementMessageCount(userId: string) {
   const val = await redisClient.hIncrBy(RedisStore.MessageCount, userId, -1);
   if (val < 0) await redisClient.hSet(RedisStore.MessageCount, userId, 0);
 }
+
+export function formatNumberWithK(num: number) {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  }
+  return num.toString();
+}
