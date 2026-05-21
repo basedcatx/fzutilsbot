@@ -9,7 +9,7 @@ export const messageEventTable = t.pgTable(
     userId: t.text("user_id").notNull(),
     userRole: t.text("user_role").notNull(),
     messageCount: t.integer("message_count").default(0),
-    createdAt: t.date({ mode: "string" }).$default(() => Date(),
+    createdAt: t.date("created_at", { mode: "string" }).defaultNow(),
   },
   (ctx) => [
     t.uniqueIndex("ui_user_id_date").on(ctx.userId, ctx.userRole),

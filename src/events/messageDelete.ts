@@ -1,9 +1,10 @@
 import { Events, Message, MessageType } from "discord.js";
 import { type ClientWithCollection } from "../types";
-import { hGetHelper, hSetHelper } from "../utils";
 import { RedisStore } from "../misc/store";
 import { db } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
+import { redisClient } from "..";
+import { eq } from "drizzle-orm";
 
 const event = {
   name: Events.MessageDelete,
@@ -15,34 +16,46 @@ const event = {
     const author = interaction.guild.members.cache.get(interaction.author.id);
     if (!author) return;
 
-    const decr =
-      Number(hGetHelper(RedisStore.MessageCount, `user:${author.id}`)) ?? 0;
+    let decr = Number(
+      redisClient.hGet(RedisStore.Users(author.id), "message_count"),
+    );
 
-    if (decr <= 0) {
-      hSetHelper(RedisStore.MessageCount, author.id, 0);
+    if (!decr) {
+      decr = (
+        await db
+          .select()
+          .from(messageEventTable)
+          .where(eq(messageEventTable.userId, author.id))
+      )[0]?.messageCount!;
     }
+
+    if (!decr || decr < 0) {
+      redisClient.hSet(RedisStore.Users(author.id), "message_count", 0);
+    }
+
+    console.log(decr);
 
     const gangRole = author.roles.cache.find((role) =>
       role.name.toLowerCase().startsWith("gang:"),
     );
 
-    hSetHelper(RedisStore.MessageCount, `user:${author.id}`, decr - 1);
+    redisClient.hSet(RedisStore.Users(author.id), "message_count", decr - 1);
 
     try {
-      db.insert(messageEventTable)
+      await db
+        .insert(messageEventTable)
         .values({
           userId: author.id,
           userRole: gangRole?.id ?? "",
           messageCount: decr - 1,
         })
         .onConflictDoUpdate({
-          target: messageEventTable.userId,
+          target: [messageEventTable.userId, messageEventTable.createdAt],
           set: { messageCount: decr - 1 },
         });
     } catch (e) {
       console.log(e);
     }
-
   },
 };
 

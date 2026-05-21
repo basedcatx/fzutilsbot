@@ -43,7 +43,7 @@ const cmd: SlashCommandType = {
     if (!member) return;
 
     await interaction.reply({
-      content: `${await redisClient.hGet(RedisStore.MessageCount, member.user.id)} messages`,
+      content: `${await redisClient.hGet(RedisStore.Users(member.user.id), "message_count")} messages`,
     });
   },
 };

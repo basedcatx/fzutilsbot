@@ -27,14 +27,19 @@ export function hGetHelper(store: RedisStore, key: string) {
 }
 
 export async function incrementMessageCount(userId: string) {
-  const old = await redisClient.hGet(RedisStore.MessageCount, userId);
-  if (!old) return redisClient.hSet(RedisStore.MessageCount, userId, 0);
-  redisClient.hIncrBy(RedisStore.MessageCount, userId, 1);
+  const old = await redisClient.hGet(RedisStore.MessageCount, `user:${userId}`);
+  if (!old) return redisClient.hSet(RedisStore.Users, `user:${userId}`, 0);
+  redisClient.hIncrBy(RedisStore.MessageCount, `user:${userId}`, 1);
 }
 
 export async function decrementMessageCount(userId: string) {
-  const val = await redisClient.hIncrBy(RedisStore.MessageCount, userId, -1);
-  if (val < 0) await redisClient.hSet(RedisStore.MessageCount, userId, 0);
+  const val = await redisClient.hIncrBy(
+    RedisStore.MessageCount,
+    `user:${userId}`,
+    -1,
+  );
+  if (val < 0)
+    await redisClient.hSet(RedisStore.MessageCount, `user:${userId}`, 0);
 }
 
 export function formatNumberWithK(num: number) {

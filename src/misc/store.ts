@@ -1,3 +1,3 @@
-export const enum RedisStore {
-  MessageCount = "msgcount",
-}
+export const RedisStore = {
+  Users: (id: string) => `user:${id}`,
+};
