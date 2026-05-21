@@ -1,7 +1,7 @@
 import Konva from "konva";
 import "konva/skia-backend";
 
-import { CARD_CONFIG, formatNumberWithK } from "./helper";
+import { CARD_CONFIG, formatNumberWithK, toPNG } from "./helper";
 
 export async function generateGangProfileCard({
   avatarUrl,
@@ -61,10 +61,10 @@ export async function generateGangProfileCard({
   try {
     await new Promise((resolve) => {
       Konva.Image.fromURL(avatarUrl, function (img) {
-        const radius = 50;
+        const radius = 40;
         const imageGroup = new Konva.Group({
           y: -40,
-          x: -40,
+          x: -18,
           clipFunc: (c) => {
             c.arc(radius, radius, radius, Math.PI * 2, 0, false);
           },
@@ -72,22 +72,11 @@ export async function generateGangProfileCard({
         img.width(radius * 2);
         img.height(radius * 2);
         imageGroup.add(img);
-        operatorGroup.add(imageGroup, img);
+        operatorGroup.add(imageGroup);
+        resolve(0);
       });
-      resolve(0);
     });
   } catch (err) {}
-
-  operatorGroup.add(
-    new Konva.Rect({
-      x: -20,
-      y: -35,
-      width: 80,
-      height: 80,
-      cornerRadius: 40,
-      fill: CARD_CONFIG.colors.bgCardElevated,
-    }),
-  );
 
   operatorGroup.add(
     new Konva.Text({
@@ -260,43 +249,12 @@ export async function generateGangProfileCard({
   layer.add(statsGroup);
 
   layer.draw();
-  return stage.toDataURL({ quality: 2 });
+
+  const dataUrl = stage.toDataURL({
+    pixelRatio: 4,
+    imageSmoothingEnabled: true,
+    mimeType: "image/png",
+  });
+
+  return toPNG(dataUrl);
 }
-
-const mockGangProfileCards = [
-  {
-    name: "X",
-    avatarUrl: "https://cdn-icons-png.flaticon.com/128/19038/19038312.png",
-    gang: {
-      name: "Cyber Phantoms",
-      totalMessages: 32150,
-    },
-    rank: 3,
-    daysInGang: 60, // Exactly 2 months (Hit that 60% loyalty milestone!)
-    msgs: [4200, 85],
-  },
-  {
-    name: "GhostRunner",
-    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Ghost",
-    gang: {
-      name: "Shadow Syndicate",
-      totalMessages: 54200,
-    },
-    rank: 14,
-    daysInGang: 15,
-    msgs: [450, 12],
-  },
-  {
-    name: "NeonSamurai_X",
-    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=Neon",
-    gang: {
-      name: "The Gridlock Protocol", // Long name to test UI text wrapping/overflow
-      totalMessages: 105000,
-    },
-    rank: 42,
-    daysInGang: 2, // Fresh recruit
-    msgs: [35, 35],
-  },
-];
-
-console.log(await generateGangProfileCard(mockGangProfileCards[0]!));

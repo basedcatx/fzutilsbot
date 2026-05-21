@@ -28,3 +28,8 @@ export const CARD_CONFIG = {
     accentTertiary: "#FFD200", // Neon Yellow: Currency, XP, points indicator
   },
 } as const;
+
+export function toPNG(dataURL: string) {
+  const base64Data = dataURL.replace(/^data:image\/png;base64,/, "");
+  return Buffer.from(base64Data, "base64");
+}
