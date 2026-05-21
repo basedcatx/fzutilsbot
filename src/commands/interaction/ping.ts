@@ -4,6 +4,7 @@ import {
   MessageFlags,
   SlashCommandBuilder,
 } from "discord.js";
+
 import type { ClientWithCollection, SlashCommandType } from "../../types";
 
 const command = new SlashCommandBuilder()

@@ -18,6 +18,7 @@ export const BotConfig = {
     REDIS_USERNAME: validateEnv("REDIS_USERNAME"),
     REDIS_PASSWORD: validateEnv("REDIS_PASSWORD"),
     REDIS_HOST: validateEnv("REDIS_HOST"),
+    DATABASE_URL: `postgres://${validateEnv("POSTGRES_USER")}:${validateEnv("POSTGRES_PASSWORD")}@localhost:5432/fzdb`,
   },
   guild: {
     PROD_SERVER_ID: validateEnv("PROD_SERVER_ID"),
