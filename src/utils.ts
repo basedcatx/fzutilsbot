@@ -22,6 +22,10 @@ export function hSetHelper(store: RedisStore, key: string, value: number) {
   redisClient.hSet(store, key, value);
 }
 
+export function hGetHelper(store: RedisStore, key: string) {
+  return redisClient.hGet(store, key);
+}
+
 export async function incrementMessageCount(userId: string) {
   const old = await redisClient.hGet(RedisStore.MessageCount, userId);
   if (!old) return redisClient.hSet(RedisStore.MessageCount, userId, 0);

@@ -5,8 +5,6 @@ import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ClientWithCollection } from "./types";
 import { createClient } from "redis";
-import { db } from "../db/db";
-import { sql } from "drizzle-orm";
 
 const client = new Client({
   intents: [
@@ -25,7 +23,6 @@ export const redisClient = createClient({
     port: 6379,
   },
 });
-
 
 await redisClient.connect();
 redisClient.on("error", (err) => console.error(err));
@@ -58,6 +55,8 @@ async function load_all_commands() {
     const c = (
       await import(pathToFileURL(path.join(cmd.parentPath, cmd.name)).href)
     ).default;
+
+    console.log(c);
 
     (client as ClientWithCollection).interactionCommands.set(c.name, c);
   }

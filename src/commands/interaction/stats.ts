@@ -33,7 +33,7 @@ const cmd: SlashCommandType = {
   ...command,
   name: "stats",
   cooldown: 5,
-  async execute(client: ClientWithCollection, interaction: Interaction) {
+  async execute(_: ClientWithCollection, interaction: Interaction) {
     if (!interaction.isChatInputCommand()) return;
 
     const type = interaction.options.getString("type");
