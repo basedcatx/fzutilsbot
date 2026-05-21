@@ -1,4 +1,4 @@
-import { Events, Message, MessageType } from "discord.js";
+import { Events, GuildMember, Message, MessageType } from "discord.js";
 import { type ClientWithCollection } from "../types";
 import { RedisStore } from "../misc/store";
 import { db } from "../../db/db";
@@ -11,13 +11,20 @@ const event = {
   once: false,
   async execute(_: ClientWithCollection, interaction: Message) {
     if (!interaction.inGuild()) return;
-    if (interaction.author.bot) return;
+
+    let authorId = interaction.author?.id;
+
+    if (!authorId) {
+      authorId =
+        (await redisClient.get(RedisStore.Message(interaction.id))) ?? "";
+    }
+
+    if (!authorId) return;
+
     if (interaction.type !== MessageType.Default) return;
-    const author = interaction.guild.members.cache.get(interaction.author.id);
-    if (!author) return;
 
     let decr = Number(
-      redisClient.hGet(RedisStore.Users(author.id), "message_count"),
+      redisClient.hGet(RedisStore.Users(authorId), "message_count"),
     );
 
     if (!decr) {
@@ -25,28 +32,23 @@ const event = {
         await db
           .select()
           .from(messageEventTable)
-          .where(eq(messageEventTable.userId, author.id))
+          .where(eq(messageEventTable.userId, authorId))
       )[0]?.messageCount!;
     }
 
     if (!decr || decr < 0) {
-      redisClient.hSet(RedisStore.Users(author.id), "message_count", 0);
+      redisClient.hSet(RedisStore.Users(authorId), "message_count", 0);
     }
 
     console.log(decr);
 
-    const gangRole = author.roles.cache.find((role) =>
-      role.name.toLowerCase().startsWith("gang:"),
-    );
-
-    redisClient.hSet(RedisStore.Users(author.id), "message_count", decr - 1);
+    redisClient.hSet(RedisStore.Users(authorId), "message_count", decr - 1);
 
     try {
       await db
         .insert(messageEventTable)
         .values({
-          userId: author.id,
-          userRole: gangRole?.id ?? "",
+          userId: authorId,
           messageCount: decr - 1,
         })
         .onConflictDoUpdate({

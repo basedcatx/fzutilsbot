@@ -58,7 +58,7 @@ export async function generateGangCard({
   // Main Identity Tag
   headerGroup.add(
     new Konva.Text({
-      text: name,
+      text: name.toUpperCase(),
       x: 45,
       y: 48,
       fontSize: 36,

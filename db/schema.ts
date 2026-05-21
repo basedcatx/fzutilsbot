@@ -7,7 +7,7 @@ export const messageEventTable = t.pgTable(
   {
     id: t.integer("id").primaryKey().generatedAlwaysAsIdentity(),
     userId: t.text("user_id").notNull(),
-    userRole: t.text("user_role").notNull(),
+    userRole: t.text("user_role"),
     messageCount: t.integer("message_count").default(0),
     createdAt: t.date("created_at", { mode: "string" }).defaultNow(),
   },

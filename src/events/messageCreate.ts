@@ -55,6 +55,10 @@ const event = {
       console.log(er);
     }
 
+    redisClient.set(RedisStore.Message(interaction.id), author.id, {
+      EX: 172800,
+    });
+
     return redisClient.hSet(
       RedisStore.Users(author.id),
       "message_count",

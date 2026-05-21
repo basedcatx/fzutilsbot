@@ -39,8 +39,26 @@ const cmd: SlashCommandType = {
     const type = interaction.options.getString("type");
     const scope = interaction.options.getString("scope");
     const member = interaction.member;
-
     if (!member) return;
+
+    if (scope === "local") {
+      if (type === "personal") {
+        return;
+      }
+      // type: global
+      return;
+    }
+
+    if (scope === "global") {
+      if (type === "personal") {
+        await interaction.reply({
+          content:
+            "You can use the /me command, to see your global (server-wide) message ranking",
+        });
+        return;
+      }
+      return;
+    }
 
     await interaction.reply({
       content: `${await redisClient.hGet(RedisStore.Users(member.user.id), "message_count")} messages`,
