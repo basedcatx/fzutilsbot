@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ClientWithCollection } from "./types";
-import { createClient } from "redis";
+import { rdb } from "../db/db";
 
 const client = new Client({
   intents: [
@@ -16,17 +16,8 @@ const client = new Client({
   partials: [Partials.Message],
 });
 
-export const redisClient = createClient({
-  username: BotConfig.env.REDIS_USERNAME,
-  password: BotConfig.env.REDIS_PASSWORD,
-  socket: {
-    host: BotConfig.isProduction ? BotConfig.env.REDIS_HOST : "localhost",
-    port: 6379,
-  },
-});
-
-await redisClient.connect();
-redisClient.on("error", (err) => console.error(err));
+await rdb.connect();
+rdb.on("error", (err) => console.error(err));
 
 {
   (client as ClientWithCollection).messageCounts = new Collection();
@@ -44,10 +35,13 @@ client
   });
 
 async function load_all_commands() {
-  const command_dirs = fs.readdirSync(path.join(__dirname, "commands"), {
-    recursive: true,
-    withFileTypes: true,
-  });
+  const command_dirs = fs.readdirSync(
+    path.join(import.meta.dirname, "commands"),
+    {
+      recursive: true,
+      withFileTypes: true,
+    },
+  );
 
   for (const cmd of command_dirs) {
     if (!cmd.isFile()) continue;
@@ -64,7 +58,7 @@ async function load_all_commands() {
 }
 
 async function load_all_events() {
-  const event_dirs = fs.readdirSync(path.join(__dirname, "events"), {
+  const event_dirs = fs.readdirSync(path.join(import.meta.dirname, "events"), {
     withFileTypes: true,
   });
 
@@ -73,7 +67,7 @@ async function load_all_events() {
 
     const e = (
       await import(
-        pathToFileURL(path.join(__dirname, "events", event.name)).href
+        pathToFileURL(path.join(import.meta.dirname, "events", event.name)).href
       )
     ).default;
 

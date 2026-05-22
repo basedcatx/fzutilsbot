@@ -1,11 +1,9 @@
 import { Events, GuildMember, Message, MessageType } from "discord.js";
 import { type ClientWithCollection } from "../types";
 import { RedisStore } from "../misc/store";
-import { db } from "../../db/db";
+import { db, rdb } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
-import { redisClient } from "..";
 import { eq } from "drizzle-orm";
-
 const event = {
   name: Events.MessageDelete,
   once: false,
@@ -16,7 +14,7 @@ const event = {
 
     if (!authorId) {
       authorId =
-        (await redisClient.get(RedisStore.Message(interaction.id))) ?? "";
+        (await rdb.get(RedisStore.Message(interaction.id))) ?? "";
     }
 
     if (!authorId) return;
@@ -24,7 +22,7 @@ const event = {
     if (interaction.type !== MessageType.Default) return;
 
     let decr = Number(
-      redisClient.hGet(RedisStore.Users(authorId), "message_count"),
+      rdb.hGet(RedisStore.Users(authorId), "message_count"),
     );
 
     if (!decr) {
@@ -37,12 +35,12 @@ const event = {
     }
 
     if (!decr || decr < 0) {
-      redisClient.hSet(RedisStore.Users(authorId), "message_count", 0);
+      rdb.hSet(RedisStore.Users(authorId), "message_count", 0);
     }
 
     console.log(decr);
 
-    redisClient.hSet(RedisStore.Users(authorId), "message_count", decr - 1);
+    rdb.hSet(RedisStore.Users(authorId), "message_count", decr - 1);
 
     try {
       await db

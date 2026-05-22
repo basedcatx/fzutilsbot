@@ -8,15 +8,17 @@ export async function generateGangProfileCard({
   msgs,
   name,
   gang,
-  rank,
+  ranks,
   daysInGang,
+  guildIcon,
 }: {
   avatarUrl: string;
   name: string;
   gang: { totalMessages: number; name: string };
-  rank: number;
+  ranks: number[];
   daysInGang: number;
   msgs: number[]; // [all_time, today]
+  guildIcon?: string;
 }) {
   const stage = new Konva.Stage({
     width: CARD_CONFIG.dimensions.modalWidth,
@@ -29,11 +31,34 @@ export async function generateGangProfileCard({
   const frameGroup = new Konva.Group({ x: 0, y: 0 });
   frameGroup.add(
     new Konva.Rect({
-      width: 900,
-      height: 520,
+      width: CARD_CONFIG.dimensions.modalWidth,
+      height: CARD_CONFIG.dimensions.modalHeight,
       fill: CARD_CONFIG.colors.bgApp,
+      opacity: guildIcon ? 0.7 : 1,
     }),
   );
+
+  if (guildIcon) {
+    try {
+      await new Promise((resolve) => {
+        Konva.Image.fromURL(guildIcon, function (img) {
+          const radius = 50;
+          const imageGroup = new Konva.Group({
+            y: 50,
+            x: CARD_CONFIG.dimensions.modalWidth - radius * 2 - 50,
+            clipFunc: (c) => {
+              c.arc(radius, radius, radius, Math.PI * 2, 0, false);
+            },
+          });
+          img.width(radius * 2);
+          img.height(radius * 2);
+          imageGroup.add(img);
+          frameGroup.add(imageGroup);
+          resolve(0);
+        });
+      });
+    } catch (err) {}
+  }
 
   const topLeftCorner = new Konva.Path({
     x: 25,
@@ -102,59 +127,81 @@ export async function generateGangProfileCard({
 
   layer.add(operatorGroup);
 
-  const rankGroup = new Konva.Group({ x: 450, y: 260 });
+  function createRankGroup(
+    xPos: number,
+    type: "DAILY" | "ALL TIME",
+    rank: number,
+  ) {
+    const g = new Konva.Group({ x: xPos, y: 260 });
+    if (isNaN(rank) || rank < 1) return g;
+    console.log("rank", rank);
 
-  const rankNum = new Konva.Text({
-    text: rank.toLocaleString(),
-    x: -100,
-    y: -65,
-    fontSize: 100,
-    fontStyle: "bold",
-    fill: CARD_CONFIG.colors.textWhite,
-    tracking: 1,
-  });
-
-  rankGroup.add(
-    new Konva.Text({
-      text: "F R I E N D Z O N E",
-      x: -30,
-      y: -50,
-      rotation: 90,
-      fontSize: 10,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.textMuted,
-      tracking: 4,
-    }),
-  );
-
-  rankGroup.add(rankNum);
-
-  rankGroup.add(
-    new Konva.Text({
-      text: "#",
-      x: -130,
-      y: -45,
-      fontSize: 26,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.accentPrimary,
-    }),
-  );
-
-  rankGroup.add(
-    new Konva.Text({
-      text: "GANG RANK",
+    const rankNum = new Konva.Text({
+      text: rank.toLocaleString(),
       x: -100,
-      y: 60,
-      width: 200,
-      align: "center",
-      fontSize: 12,
+      y: -65,
+      fontSize: 100,
       fontStyle: "bold",
-      fill: CARD_CONFIG.colors.accentPrimary,
-      tracking: 6,
-    }),
-  );
+      fill:
+        type === "DAILY"
+          ? CARD_CONFIG.colors.textWhite
+          : CARD_CONFIG.colors.accentTertiary,
+      tracking: 1,
+    });
 
-  layer.add(rankGroup);
+    if (type === "DAILY") {
+      g.add(
+        new Konva.Text({
+          text: "F R I E N D Z O N E",
+          x: -30,
+          y: -50,
+          rotation: 90,
+          fontSize: 10,
+          fontStyle: "bold", fill: CARD_CONFIG.colors.textMuted,
+          tracking: 4,
+        }),
+      );
+    }
+
+    g.add(rankNum);
+
+    g.add(
+      new Konva.Text({
+        text: "#",
+        x: -130,
+        y: -45,
+        fontSize: 26,
+        fontStyle: "bold",
+        fill:
+          type === "DAILY"
+            ? CARD_CONFIG.colors.accentPrimary
+            : CARD_CONFIG.colors.accentTertiary,
+      }),
+    );
+
+    g.add(
+      new Konva.Text({
+        text: `${type} RANK`,
+        x: -100,
+        y: 60,
+        width: 200,
+        align: "center",
+        fontSize: 12,
+        fontStyle: "bold",
+        fill:
+          type === "DAILY"
+            ? CARD_CONFIG.colors.accentPrimary
+            : CARD_CONFIG.colors.accentTertiary,
+        tracking: 6,
+      }),
+    );
+    return g;
+  }
+
+  layer.add(
+    createRankGroup(400, "DAILY", ranks[1]!),
+    createRankGroup(600, "ALL TIME", ranks[0]!),
+  );
 
   const statsGroup = new Konva.Group({ x: 50, y: 380 });
 
@@ -229,6 +276,9 @@ export async function generateGangProfileCard({
   );
 
   function calculateProgress(ratio: number, days: number) {
+    if (ratio === Infinity) {
+      ratio = 0.0001;
+    }
     const c = 0.0153;
     const percentage = 100 * (1 - Math.exp(-c * ratio * days));
     return Math.max(Math.min(percentage - 0.05 * days, 100), 0).toFixed(2);

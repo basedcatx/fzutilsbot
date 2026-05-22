@@ -1,11 +1,10 @@
 import { Events, Message, MessageType } from "discord.js";
-
 import { type ClientWithCollection } from "../types";
 import { RedisStore } from "../misc/store";
-import { db } from "../../db/db";
+import { db, rdb } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
 import { eq, and } from "drizzle-orm";
-import { redisClient } from "..";
+
 const event = {
   name: Events.MessageCreate,
   once: false,
@@ -17,7 +16,7 @@ const event = {
     if (!author) return;
 
     let old = Number(
-      redisClient.hGet(RedisStore.Users(author.id), "message_count"),
+      rdb.hGet(RedisStore.Users(author.id), "message_count"),
     );
 
     if (!old) {
@@ -55,11 +54,11 @@ const event = {
       console.log(er);
     }
 
-    redisClient.set(RedisStore.Message(interaction.id), author.id, {
+    rdb.set(RedisStore.Message(interaction.id), author.id, {
       EX: 172800,
     });
 
-    return redisClient.hSet(
+    return rdb.hSet(
       RedisStore.Users(author.id),
       "message_count",
       old + 1,

@@ -5,9 +5,8 @@ import {
   type Interaction,
 } from "discord.js";
 import type { ClientWithCollection, SlashCommandType } from "../../types";
-import { redisClient } from "../..";
 import { RedisStore } from "../../misc/store";
-import { db } from "../../../db/db";
+import { db, rdb } from "../../../db/db";
 import { messageEventTable } from "../../../db/schema";
 import { and, eq, desc, asc } from "drizzle-orm";
 import dayjs from "dayjs";
@@ -63,9 +62,12 @@ const cmd: SlashCommandType = {
             .select()
             .from(messageEventTable)
             .where(
-              eq(
-                messageEventTable.createdAt,
-                new Date().toISOString().split("T")[0]!,
+              and(
+                eq(messageEventTable.userRole, g.id),
+                eq(
+                  messageEventTable.createdAt,
+                  new Date().toISOString().split("T")[0]!,
+                ),
               ),
             )
             .orderBy(desc(messageEventTable.messageCount)),
@@ -76,7 +78,10 @@ const cmd: SlashCommandType = {
             .orderBy(asc(messageEventTable.createdAt)),
         ]);
 
+        console.log(res[0]);
         const userRank = res[0].findIndex((u) => u.userId === member.id) + 1;
+
+        console.log(userRank);
 
         const duration = dayjs(new Date().toISOString())
           .diff(res[1][0]?.createdAt, "day", true)
@@ -90,13 +95,12 @@ const cmd: SlashCommandType = {
 
         const mToday = res[1]?.at(-1)?.messageCount ?? 0;
 
-        const mGangAllTime = res[0]
+        const mGangAllTime = res[1]
           .filter((r) => r.userRole === g.id)
           .reduce((prev, curr) => {
             return prev + (curr.messageCount ?? 0);
           }, 0);
 
-        console.log(mAllTime, mGangAllTime, 0);
         const attachment = new AttachmentBuilder(
           await generateGangProfileCard({
             avatarUrl: member.displayAvatarURL({
@@ -105,14 +109,18 @@ const cmd: SlashCommandType = {
             }),
             name: member.displayName,
             gang: { totalMessages: mGangAllTime, name: g.name.toUpperCase() },
-            rank: userRank,
+            ranks: [1, userRank],
             daysInGang: Number(duration) ?? 0,
             msgs: [mAllTime, mToday],
+            guildIcon:
+              interaction.guild?.iconURL({
+                extension: "png",
+                forceStatic: true,
+              }) ?? undefined,
           }),
           { name: "profile-card.png" },
         );
 
-        console.log(attachment.attachment);
         await interaction.reply({ files: [attachment] });
         return;
       }
@@ -132,7 +140,7 @@ const cmd: SlashCommandType = {
     }
 
     await interaction.reply({
-      content: `${await redisClient.hGet(RedisStore.Users(member.user.id), "message_count")} messages`,
+      content: `${await rdb.hGet(RedisStore.Users(member.user.id), "message_count")} messages`,
     });
   },
 };
