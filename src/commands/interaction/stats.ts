@@ -11,6 +11,7 @@ import { messageEventTable } from "../../../db/schema";
 import { and, eq, desc, asc } from "drizzle-orm";
 import dayjs from "dayjs";
 import { generateGangProfileCard } from "../../misc/generateProfileCard";
+import { sql } from "drizzle-orm";
 
 const command = new SlashCommandBuilder()
   .setName("stats")
@@ -76,10 +77,20 @@ const cmd: SlashCommandType = {
             .from(messageEventTable)
             .where(and(eq(messageEventTable.userId, member.id)))
             .orderBy(asc(messageEventTable.createdAt)),
+          db
+            .select({
+              userId: messageEventTable.userId,
+              messageCount: sql<number>`sum(${messageEventTable.messageCount})::int`,
+            })
+            .from(messageEventTable)
+            .groupBy(messageEventTable.userId)
+            .orderBy((fields) => desc(fields.messageCount)),
         ]);
 
-        console.log(res[0]);
+        console.log(res[2]);
         const userRank = res[0].findIndex((u) => u.userId === member.id) + 1;
+        const userAllTimeRank =
+          res[2].findIndex((u) => u.userId === member.id) + 1;
 
         console.log(userRank);
 
@@ -109,7 +120,7 @@ const cmd: SlashCommandType = {
             }),
             name: member.displayName,
             gang: { totalMessages: mGangAllTime, name: g.name.toUpperCase() },
-            ranks: [1, userRank],
+            ranks: [userAllTimeRank, userRank],
             daysInGang: Number(duration) ?? 0,
             msgs: [mAllTime, mToday],
             guildIcon:
