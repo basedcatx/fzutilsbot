@@ -14,7 +14,6 @@ const event = {
 
     if (interaction.type !== MessageType.Default) return;
     const author = interaction.guild.members.cache.get(interaction.author.id);
-    console.log("author", author);
     if (!author) return;
 
     const gang = author.roles.cache.find((r) =>

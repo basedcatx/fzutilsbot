@@ -11,7 +11,7 @@ export async function generateGangCard({
 }: {
   name: string;
   msgs: number[];
-  ranking: number[];
+  ranking: number[]; // [current, former]
   gangs: { msgs: number; name: string }[];
   nextInLine: { name: string; leader: string };
 }) {
@@ -420,17 +420,3 @@ export async function generateGangCard({
   mainLayer.draw();
   return stage.toDataURL({ quality: 2 });
 }
-
-const mock_data = {
-  name: "PLUH",
-  msgs: [9500, 20, 300],
-  ranking: [15, 10],
-  gangs: [
-    { msgs: 95000000, name: "VOID_WALKERS" },
-    { msgs: 12000, name: "CYBER_PUNKS" },
-    { msgs: 5000, name: "NEON_SHADES" },
-  ],
-  nextInLine: { name: "ShadowByte", leader: "GANG_LORD_77" },
-};
-
-console.log(await generateGangCard(mock_data));
