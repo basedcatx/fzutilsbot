@@ -1,10 +1,10 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { BotConfig } from "./config";
 import fs from "node:fs";
 import path, { extname } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { ClientWithCollection } from "./types";
 import { rdb } from "../db/db";
+import { BotConfig } from "../config";
 
 const client = new Client({
   intents: [

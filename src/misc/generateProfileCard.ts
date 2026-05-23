@@ -15,7 +15,7 @@ export async function generateGangProfileCard({
   avatarUrl: string;
   name: string;
   gang: { totalMessages: number; name: string };
-  ranks: number[];
+  ranks: number[]; //[all_time, today]
   daysInGang: number;
   msgs: number[]; // [all_time, today]
   guildIcon?: string;
@@ -157,7 +157,8 @@ export async function generateGangProfileCard({
           y: -50,
           rotation: 90,
           fontSize: 10,
-          fontStyle: "bold", fill: CARD_CONFIG.colors.textMuted,
+          fontStyle: "bold",
+          fill: CARD_CONFIG.colors.textMuted,
           tracking: 4,
         }),
       );

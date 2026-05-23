@@ -1,7 +1,7 @@
 import { configDotenv } from "dotenv";
 import path from "node:path";
 
-configDotenv({ path: path.join(import.meta.dirname, "..", ".env") });
+configDotenv({ path: path.join(import.meta.dirname, ".env") });
 
 function validateEnv(key: string) {
   const res = process.env[key];
