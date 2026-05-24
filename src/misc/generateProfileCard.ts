@@ -8,14 +8,14 @@ export async function generateGangProfileCard({
   msgs,
   name,
   gang,
-  ranks,
+  rank,
   daysInGang,
   guildIcon,
 }: {
   avatarUrl: string;
   name: string;
   gang: { totalMessages: number; name: string };
-  ranks: number[]; //[all_time, today]
+  rank: number;
   daysInGang: number;
   msgs: number[]; // [all_time, today]
   guildIcon?: string;
@@ -127,11 +127,7 @@ export async function generateGangProfileCard({
 
   layer.add(operatorGroup);
 
-  function createRankGroup(
-    xPos: number,
-    type: "DAILY" | "ALL TIME",
-    rank: number,
-  ) {
+  function createRankGroup(xPos: number, rank: number) {
     const g = new Konva.Group({ x: xPos, y: 260 });
     if (isNaN(rank) || rank < 1) return g;
     console.log("rank", rank);
@@ -142,27 +138,22 @@ export async function generateGangProfileCard({
       y: -65,
       fontSize: 100,
       fontStyle: "bold",
-      fill:
-        type === "DAILY"
-          ? CARD_CONFIG.colors.textWhite
-          : CARD_CONFIG.colors.accentTertiary,
+      fill: CARD_CONFIG.colors.textWhite,
       tracking: 1,
     });
 
-    if (type === "DAILY") {
-      g.add(
-        new Konva.Text({
-          text: "F R I E N D Z O N E",
-          x: -30,
-          y: -50,
-          rotation: 90,
-          fontSize: 10,
-          fontStyle: "bold",
-          fill: CARD_CONFIG.colors.textMuted,
-          tracking: 4,
-        }),
-      );
-    }
+    g.add(
+      new Konva.Text({
+        text: "F R I E N D Z O N E",
+        x: -30,
+        y: -50,
+        rotation: 90,
+        fontSize: 10,
+        fontStyle: "bold",
+        fill: CARD_CONFIG.colors.textMuted,
+        tracking: 4,
+      }),
+    );
 
     g.add(rankNum);
 
@@ -173,36 +164,27 @@ export async function generateGangProfileCard({
         y: -45,
         fontSize: 26,
         fontStyle: "bold",
-        fill:
-          type === "DAILY"
-            ? CARD_CONFIG.colors.accentPrimary
-            : CARD_CONFIG.colors.accentTertiary,
+        fill: CARD_CONFIG.colors.accentPrimary,
       }),
     );
 
     g.add(
       new Konva.Text({
-        text: `${type} RANK`,
+        text: `RANKINGS`,
         x: -100,
         y: 60,
         width: 200,
         align: "center",
         fontSize: 12,
         fontStyle: "bold",
-        fill:
-          type === "DAILY"
-            ? CARD_CONFIG.colors.accentPrimary
-            : CARD_CONFIG.colors.accentTertiary,
+        fill: CARD_CONFIG.colors.accentPrimary,
         tracking: 6,
       }),
     );
     return g;
   }
 
-  layer.add(
-    createRankGroup(400, "DAILY", ranks[1]!),
-    createRankGroup(600, "ALL TIME", ranks[0]!),
-  );
+  layer.add(createRankGroup(550, rank));
 
   const statsGroup = new Konva.Group({ x: 50, y: 380 });
 
@@ -282,16 +264,22 @@ export async function generateGangProfileCard({
     }
     const c = 0.0153;
     const percentage = 100 * (1 - Math.exp(-c * ratio * days));
-    return Math.max(Math.min(percentage - 0.05 * days, 100), 0).toFixed(2);
+    const res = Math.max(Math.min(percentage - 0.05 * days, 100), 0);
+    if (isNaN(res)) {
+      return 0;
+    }
+    return res.toFixed(2);
   }
 
   statsGroup.add(
     createDataCol(
       280 * 2,
       "GANG LOYALTY PERCENT",
-      calculateProgress(
-        (msgs[0] ?? 0) / gang.totalMessages,
-        daysInGang,
+      (
+        calculateProgress(
+          (msgs[0] || 0) / (gang.totalMessages || 0),
+          daysInGang || 0,
+        ) || 0
       ).toString() + "%",
       "INTEGRITY",
     ),

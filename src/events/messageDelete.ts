@@ -3,16 +3,16 @@ import { type ClientWithCollection } from "../types";
 import { RedisStore } from "../misc/store";
 import { db, rdb } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
-import { eq } from "drizzle-orm";
+
 const event = {
   name: Events.MessageDelete,
   once: false,
   async execute(_: ClientWithCollection, interaction: Message) {
     if (!interaction.inGuild()) return;
-
     let authorId = interaction.author?.id;
+
     const temp = JSON.parse(
-      (await rdb.get(RedisStore.Message(interaction.id))) ??
+      (await rdb.hGet(RedisStore.MessageEvent, interaction.id)) ??
         '{author: "", type: 0}',
     );
 
@@ -40,54 +40,25 @@ const event = {
       //@ts-ignore
       if (interaction.type !== MessageType.Default) return;
     }
-    console.log("here");
 
-    let decr = await rdb.zIncrBy(
-      RedisStore.DailyGangLeaderBoard(gang.id),
-      -1,
-      authorId,
+    const value = Math.min(
+      (await rdb.zIncrBy(RedisStore.GangLeaderBoard, -1, gang.id)) ?? 0,
+      0,
     );
 
-    console.log(decr);
-
-    if (!decr || decr < 0) {
-      decr = (
-        await db
-          .select()
-          .from(messageEventTable)
-          .where(eq(messageEventTable.userId, authorId))
-      )[0]?.messageCount!;
-    }
-
-    if (!decr || decr < 0) {
-      const res = await Promise.all([
-        rdb.zAdd(RedisStore.DailyGangLeaderBoard(gang.id), {
-          score: 0,
-          value: authorId,
-        }),
-        rdb.zAdd(RedisStore.AllTimeGangLeaderBoard(gang.id), {
-          score: 0,
-          value: authorId,
-        }),
-      ]);
-
-      decr = res[0] || 0;
-    }
-
-    try {
-      await db
+    await Promise.all([
+      rdb.zAdd(RedisStore.GangLeaderBoard, { score: value, value: gang.id }),
+      db
         .insert(messageEventTable)
         .values({
           userId: authorId,
-          messageCount: decr,
+          messageCount: value,
         })
         .onConflictDoUpdate({
           target: [messageEventTable.userId, messageEventTable.createdAt],
-          set: { messageCount: decr },
-        });
-    } catch (e) {
-      console.log(e);
-    }
+          set: { messageCount: value },
+        }),
+    ]);
   },
 };
 

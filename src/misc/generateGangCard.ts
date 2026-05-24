@@ -6,12 +6,12 @@ export async function generateGangCard({
   name,
   gangs,
   msgs,
-  ranking,
+  rank,
   nextInLine,
 }: {
   name: string;
   msgs: number[];
-  ranking: number[]; // [current, former]
+  rank: number; // [current, former]
   gangs: { msgs: number; name: string }[];
   nextInLine: { name: string; leader: string };
 }) {
@@ -37,8 +37,7 @@ export async function generateGangCard({
     new Konva.Rect({
       width: 900,
       height: 110,
-      fill: CARD_CONFIG.colors.bgCard,
-      stroke: CARD_CONFIG.colors.bgBadge,
+      fill: CARD_CONFIG.colors.bgApp,
       strokeWidth: 1,
     }),
   );
@@ -167,45 +166,27 @@ export async function generateGangCard({
     }),
   );
 
-  rankGroup.add(
-    new Konva.Text({
-      text: (ranking[0] ?? -1).toLocaleString(),
-      x: 45,
-      y: 48,
-      fontSize: 34,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.accentPrimary,
-    }),
-  );
+  const rankText = new Konva.Text({
+    text: rank.toLocaleString(),
+    x: 45,
+    y: 48,
+    fontSize: 34,
+    fontStyle: "bold",
+    fill: CARD_CONFIG.colors.accentPrimary,
+  });
+
+  rankGroup.add(rankText);
 
   rankGroup.add(
     new Konva.Text({
       text: `/ ${gangs.length}`,
-      x: 120,
+      x: 60 + rankText.textWidth,
       y: 64,
       fontSize: 13,
       fontStyle: "bold",
       fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
-
-  // from the db
-  const rankInc = (ranking[1] ?? -1) - (ranking[0] ?? -1);
-
-  rankGroup.add(
-    new Konva.Text({
-      text:
-        rankInc > 0
-          ? `+${rankInc} POSITIONS (24H)`
-          : `${rankInc} POSITIONS (24H)`,
-      x: 45,
-      y: 102,
-      fontSize: 11,
-      fontStyle: "bold",
-      fill: rankInc > 0 ? "#1E8449" : CARD_CONFIG.colors.accentSecondary, // Green indicator trend color
-    }),
-  );
-
   mainLayer.add(rankGroup);
 
   const activityGroup = new Konva.Group({ x: 0, y: 250 });
@@ -301,52 +282,54 @@ export async function generateGangCard({
   );
 
   // Red Skull Logo Icon Box
-  const iconBox = new Konva.Group({ x: 45, y: 55 });
-  iconBox.add(
-    new Konva.Rect({
-      width: 34,
-      height: 34,
-      fill: "#2A161A",
-      cornerRadius: 40,
-    }),
-  );
-  iconBox.add(
-    new Konva.Text({
-      text: "💀",
-      x: 0,
-      y: 8,
-      width: 34,
-      align: "center",
-      fontSize: 16,
-    }),
-  );
-  allianceGroup.add(iconBox);
+  if (nextInLine) {
+    const iconBox = new Konva.Group({ x: 45, y: 55 });
+    iconBox.add(
+      new Konva.Rect({
+        width: 34,
+        height: 34,
+        fill: CARD_CONFIG.colors.accentSecondary,
+        cornerRadius: 40,
+        opacity: 0.2,
+      }),
+    );
+    iconBox.add(
+      new Konva.Text({
+        text: "💀",
+        x: 0,
+        y: 8,
+        width: 34,
+        align: "center",
+        fontSize: 16,
+      }),
+    );
+    allianceGroup.add(iconBox);
 
-  // Alliance Name Text
-  allianceGroup.add(
-    new Konva.Text({
-      text: nextInLine.name,
-      x: 95,
-      y: 56,
-      fontSize: 18,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.textWhite,
-      tracking: 1,
-    }),
-  );
+    // Alliance Name Text
+    allianceGroup.add(
+      new Konva.Text({
+        text: nextInLine.name.toUpperCase(),
+        x: 95,
+        y: 56,
+        fontSize: 18,
+        fontStyle: "bold",
+        fill: CARD_CONFIG.colors.textWhite,
+        tracking: 1,
+      }),
+    );
 
-  allianceGroup.add(
-    new Konva.Text({
-      text: nextInLine.leader,
-      x: 95,
-      y: 78,
-      fontSize: 10,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.accentSecondary,
-    }),
-  );
-
-  mainLayer.add(allianceGroup);
+    allianceGroup.add(
+      new Konva.Text({
+        text: nextInLine.leader,
+        x: 95,
+        y: 78,
+        fontSize: 10,
+        fontStyle: "bold",
+        fill: CARD_CONFIG.colors.accentSecondary,
+      }),
+    );
+    mainLayer.add(allianceGroup);
+  }
 
   function createFooterBlock(
     xPos: number,
@@ -362,7 +345,7 @@ export async function generateGangCard({
       new Konva.Rect({
         width: 260,
         height: 75,
-        fill: CARD_CONFIG.colors.bgCard,
+        fill: CARD_CONFIG.colors.bgBadge,
         strokeWidth: 1,
         cornerRadius: 2,
       }),
@@ -418,5 +401,5 @@ export async function generateGangCard({
 
   mainLayer.add(blockCredits);
   mainLayer.draw();
-  return stage.toDataURL({ quality: 2 });
+  return stage.toDataURL({ quality: 4 });
 }

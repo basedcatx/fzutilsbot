@@ -1,9 +1,10 @@
 import { Events, Message, MessageType } from "discord.js";
 import { type ClientWithCollection } from "../types";
 import { RedisKeys, RedisStore } from "../misc/store";
-import { db, rdb } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
 import ms from "ms";
+import { db, rdb } from "../../db/db";
+import { sql } from "drizzle-orm";
 
 const event = {
   name: Events.MessageCreate,
@@ -22,39 +23,20 @@ const event = {
 
     if (!gang) return;
 
-    const oldGangId = await rdb.hGet(
-      RedisStore.Users(author.id),
-      RedisKeys.Gang,
-    );
+    const oldGangId = await rdb.get(RedisStore.Users(author.id));
 
     if (oldGangId && oldGangId !== gang.id) {
-      await changeUserGang(author.id, oldGangId, gang.id);
+      await changeUserGang(author.id, gang.id);
     }
 
-    await rdb.set(
-      RedisStore.Message(interaction.id),
+    await rdb.hSet(
+      RedisStore.MessageEvent,
+      interaction.id,
       JSON.stringify({ author: author.id, type: interaction.type }),
-      {
-        PX: ms("2 days"),
-      },
     );
 
-    const [newAllTimeCount, newDailyCount] = await Promise.all([
-      rdb.zIncrBy(RedisStore.AllTimeGangLeaderBoard(gang.id), 1, author.id),
-      rdb.zIncrBy(RedisStore.DailyGangLeaderBoard(gang.id), 1, author.id),
-    ]);
-
-    await rdb.expire(
-      RedisStore.DailyGangLeaderBoard(gang.id),
-      ms("2 days"),
-      "NX",
-    );
-
-    await rdb.hSet(RedisStore.Users(author.id), {
-      gang: gang.id,
-      messageCount: newAllTimeCount,
-    });
-
+    await rdb.zIncrBy(RedisStore.GangLeaderBoard, 1, gang.id);
+    await rdb.set(RedisStore.Users(author.id), gang.id);
     await rdb.expire(RedisStore.Users(author.id), ms("2 days"));
 
     try {
@@ -63,10 +45,13 @@ const event = {
         .values({
           userId: author.id,
           userRole: gang.id,
+          messageCount: 0,
         })
         .onConflictDoUpdate({
           target: [messageEventTable.userId, messageEventTable.createdAt],
-          set: { messageCount: newDailyCount },
+          set: {
+            messageCount: sql<number>`${messageEventTable.messageCount} + 1`,
+          },
         });
     } catch (er) {
       console.log(er);
@@ -74,38 +59,19 @@ const event = {
   },
 };
 
-async function changeUserGang(
-  id: string,
-  oldGangId: string,
-  newGangId: string,
-) {
-  await Promise.all([
-    rdb.zRem(RedisStore.AllTimeGangLeaderBoard(oldGangId), id),
-    rdb.zRem(RedisStore.DailyGangLeaderBoard(oldGangId), id),
-  ]);
-
-  await Promise.all([
-    rdb.zAdd(RedisStore.AllTimeGangLeaderBoard(oldGangId), {
-      score: 0,
-      value: id,
-    }),
-    rdb.zAdd(RedisStore.DailyGangLeaderBoard(oldGangId), {
-      score: 0,
-      value: id,
-    }),
-  ]);
-
-  await rdb.hSet(RedisStore.Users(id), RedisKeys.Gang, newGangId);
+async function changeUserGang(id: string, newGangId: string) {
+  await rdb.set(RedisStore.Users(id), newGangId);
 
   await db
     .insert(messageEventTable)
     .values({
       userId: id,
+      userRole: newGangId,
       messageCount: 0,
     })
     .onConflictDoUpdate({
       target: [messageEventTable.userId, messageEventTable.createdAt],
-      set: { messageCount: 0 },
+      set: { messageCount: 0, userRole: newGangId },
     });
 }
 

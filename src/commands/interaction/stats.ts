@@ -13,6 +13,7 @@ import { generateGangProfileCard } from "../../misc/generateProfileCard";
 import { sql } from "drizzle-orm";
 import { toPNG } from "../../misc/helper";
 import { generateGangCard } from "../../misc/generateGangCard";
+import { RedisStore } from "../../misc/store";
 
 const command = new SlashCommandBuilder()
   .setName("stats")
@@ -113,7 +114,6 @@ async function handleLocalPersonal(
   ]);
 
   const userRank = res[0].findIndex((u) => u.userId === member.id) + 1;
-  const userAllTimeRank = res[2].findIndex((u) => u.userId === member.id) + 1;
 
   const duration = dayjs(new Date().toISOString())
     .diff(res[1][0]?.createdAt, "day", true)
@@ -141,7 +141,7 @@ async function handleLocalPersonal(
       }),
       name: member.displayName,
       gang: { totalMessages: mGangAllTime, name: g.name.toUpperCase() },
-      ranks: [userAllTimeRank, userRank],
+      rank: userRank,
       daysInGang: Number(duration) ?? 0,
       msgs: [mAllTime, mToday],
       guildIcon:
@@ -216,13 +216,15 @@ async function handleLocalGlobal(
     });
 
   const nextInLine = gangs[0]!;
+  const rank =
+    ((await rdb.zRevRank(RedisStore.GangLeaderBoard, g.id)) ?? -2) + 1;
 
   const attachment = new AttachmentBuilder(
     toPNG(
       await generateGangCard({
         name: g.name,
         msgs,
-        ranking: [2, 3],
+        rank: rank ?? -1,
         gangs,
         nextInLine,
       }),
