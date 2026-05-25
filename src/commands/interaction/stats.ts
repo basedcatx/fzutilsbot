@@ -56,6 +56,7 @@ const cmd: SlashCommandType = {
     if (scope === "local") {
       if (type === "personal") {
         await handleLocalPersonal(interaction, member);
+        return;
       }
       return await handleLocalGlobal(interaction, member);
     }
@@ -142,7 +143,7 @@ async function handleLocalPersonal(
       name: member.displayName,
       gang: { totalMessages: mGangAllTime, name: g.name.toUpperCase() },
       rank: userRank,
-      daysInGang: Number(duration) ?? 0,
+      daysInGang: Number(duration) ?? 1,
       msgs: [mAllTime, mToday],
       guildIcon:
         interaction.guild?.iconURL({
@@ -218,6 +219,8 @@ async function handleLocalGlobal(
   const nextInLine = gangs[0]!;
   const rank =
     ((await rdb.zRevRank(RedisStore.GangLeaderBoard, g.id)) ?? -2) + 1;
+
+  console.log("ranky", rank, msgs);
 
   const attachment = new AttachmentBuilder(
     toPNG(

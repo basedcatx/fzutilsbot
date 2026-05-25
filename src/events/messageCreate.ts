@@ -1,6 +1,6 @@
 import { Events, Message, MessageType } from "discord.js";
 import { type ClientWithCollection } from "../types";
-import { RedisKeys, RedisStore } from "../misc/store";
+import { RedisStore } from "../misc/store";
 import { messageEventTable } from "../../db/schema";
 import ms from "ms";
 import { db, rdb } from "../../db/db";
@@ -45,7 +45,7 @@ const event = {
         .values({
           userId: author.id,
           userRole: gang.id,
-          messageCount: 0,
+          messageCount: 1,
         })
         .onConflictDoUpdate({
           target: [messageEventTable.userId, messageEventTable.createdAt],
@@ -67,11 +67,11 @@ async function changeUserGang(id: string, newGangId: string) {
     .values({
       userId: id,
       userRole: newGangId,
-      messageCount: 0,
+      messageCount: 1,
     })
     .onConflictDoUpdate({
       target: [messageEventTable.userId, messageEventTable.createdAt],
-      set: { messageCount: 0, userRole: newGangId },
+      set: { messageCount: 1, userRole: newGangId },
     });
 }
 

@@ -184,7 +184,7 @@ export async function generateGangProfileCard({
     return g;
   }
 
-  layer.add(createRankGroup(550, rank));
+  layer.add(createRankGroup(500, rank));
 
   const statsGroup = new Konva.Group({ x: 50, y: 380 });
 
@@ -290,7 +290,7 @@ export async function generateGangProfileCard({
   layer.draw();
 
   const dataUrl = stage.toDataURL({
-    pixelRatio: 4,
+    pixelRatio: 6,
     imageSmoothingEnabled: true,
     mimeType: "image/png",
   });

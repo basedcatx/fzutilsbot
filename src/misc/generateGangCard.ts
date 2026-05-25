@@ -16,8 +16,8 @@ export async function generateGangCard({
   nextInLine: { name: string; leader: string };
 }) {
   const stage = new Konva.Stage({
-    width: CARD_CONFIG.dimensions.modalWidth,
-    height: CARD_CONFIG.dimensions.modalHeight,
+    width: CARD_CONFIG.dimensions.modalWidth + 25,
+    height: CARD_CONFIG.dimensions.modalHeight - 87,
   });
 
   const mainLayer = new Konva.Layer();
@@ -68,7 +68,7 @@ export async function generateGangCard({
 
   mainLayer.add(headerGroup);
 
-  const commGroup = new Konva.Group({ x: 0, y: 110 });
+  const commGroup = new Konva.Group({ x: 0, y: 150 });
 
   commGroup.add(
     new Konva.Rect({
@@ -93,7 +93,7 @@ export async function generateGangCard({
   );
 
   const msgText = new Konva.Text({
-    text: (msgs[0] ?? 0).toLocaleString(),
+    text: (msgs.at(-1) ?? 1).toLocaleString(),
     x: 45,
     y: 52,
     fontSize: 32,
@@ -143,7 +143,7 @@ export async function generateGangCard({
 
   mainLayer.add(commGroup);
 
-  const rankGroup = new Konva.Group({ x: 450, y: 110 });
+  const rankGroup = new Konva.Group({ x: 450, y: 150 });
   rankGroup.add(
     new Konva.Rect({
       width: 450,
@@ -179,7 +179,7 @@ export async function generateGangCard({
 
   rankGroup.add(
     new Konva.Text({
-      text: `/ ${gangs.length}`,
+      text: `/ ${gangs.length + 1}`,
       x: 60 + rankText.textWidth,
       y: 64,
       fontSize: 13,
@@ -189,7 +189,7 @@ export async function generateGangCard({
   );
   mainLayer.add(rankGroup);
 
-  const activityGroup = new Konva.Group({ x: 0, y: 250 });
+  const activityGroup = new Konva.Group({ x: 0, y: 250 + 40 });
   activityGroup.add(
     new Konva.Rect({
       width: 450,
@@ -247,7 +247,7 @@ export async function generateGangCard({
 
   mainLayer.add(activityGroup);
 
-  const allianceGroup = new Konva.Group({ x: 450, y: 250 });
+  const allianceGroup = new Konva.Group({ x: 450, y: 250 + 40 });
   allianceGroup.add(
     new Konva.Rect({
       width: 450,
@@ -391,15 +391,22 @@ export async function generateGangCard({
     return g;
   }
 
-  const blockCredits = createFooterBlock(
-    25,
-    "GANG CREDITS",
-    "N/A",
-    "(coming soon)",
-    CARD_CONFIG.colors.accentTertiary,
-  );
-
-  mainLayer.add(blockCredits);
+  //TODO: Add this on later
+  //
+  // const blockCredits = createFooterBlock(
+  //   25,
+  //   "GANG CREDITS",
+  //   "N/A",
+  //   "(coming soon)",
+  //   CARD_CONFIG.colors.accentTertiary,
+  // );
+  //
+  // mainLayer.add(blockCredits);
+  //
   mainLayer.draw();
-  return stage.toDataURL({ quality: 4 });
+  return stage.toDataURL({
+    pixelRatio: 6,
+    imageSmoothingEnabled: true,
+    mimeType: "image/png",
+  });
 }
