@@ -1,16 +1,20 @@
-import Konva from "konva";
 import "konva/skia-backend";
-import { CARD_CONFIG } from "./helper";
+loadFonts();
+
+import Konva from "konva";
+import { CARD_CONFIG, loadFonts } from "./helper";
 
 export async function generateGangCard({
   name,
   gangs,
   msgs,
   rank,
+  avatarUrl,
   nextInLine,
 }: {
   name: string;
   msgs: number[];
+  avatarUrl: string | null;
   rank: number; // [current, former]
   gangs: { msgs: number; name: string }[];
   nextInLine: { name: string; leader: string };
@@ -49,6 +53,7 @@ export async function generateGangCard({
       y: 30,
       fontSize: 11,
       fontStyle: "bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.textMuted,
       tracking: 2,
     }),
@@ -62,9 +67,32 @@ export async function generateGangCard({
       y: 48,
       fontSize: 36,
       fontStyle: "italic bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.textWhite,
     }),
   );
+
+  if (avatarUrl) {
+    try {
+      await new Promise((resolve) => {
+        Konva.Image.fromURL(avatarUrl, function (img) {
+          const radius = 50;
+          const imageGroup = new Konva.Group({
+            y: 45,
+            x: CARD_CONFIG.dimensions.modalWidth - radius * 2 - 50,
+            clipFunc: (c) => {
+              c.arc(radius, radius, radius, Math.PI * 2, 0, false);
+            },
+          });
+          img.width(radius * 2);
+          img.height(radius * 2);
+          imageGroup.add(img);
+          headerGroup.add(imageGroup);
+          resolve(0);
+        });
+      });
+    } catch (err) {}
+  }
 
   mainLayer.add(headerGroup);
 
@@ -87,6 +115,7 @@ export async function generateGangCard({
       y: 28,
       fontSize: 10,
       fontStyle: "bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.textWhite,
       tracking: 1.5,
     }),
@@ -98,6 +127,7 @@ export async function generateGangCard({
     y: 52,
     fontSize: 32,
     fontStyle: "bold",
+    fontFamily: "inter",
     fill: CARD_CONFIG.colors.textWhite,
   });
 
@@ -110,6 +140,7 @@ export async function generateGangCard({
       y: 68,
       fontSize: 12,
       fontStyle: "bold",
+      fontFamily: "inter",
       fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
@@ -161,17 +192,20 @@ export async function generateGangCard({
       y: 28,
       fontSize: 10,
       fontStyle: "bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.textMuted,
       tracking: 1.5,
     }),
   );
 
   const rankText = new Konva.Text({
-    text: rank.toLocaleString(),
+    text: "#" + rank.toLocaleString(),
     x: 45,
     y: 48,
     fontSize: 34,
     fontStyle: "bold",
+    fontFamily: "space",
+    letterSpacing: 4,
     fill: CARD_CONFIG.colors.accentPrimary,
   });
 
@@ -181,9 +215,10 @@ export async function generateGangCard({
     new Konva.Text({
       text: `/ ${gangs.length + 1}`,
       x: 60 + rankText.textWidth,
-      y: 64,
-      fontSize: 13,
+      y: 55,
+      fontSize: 25,
       fontStyle: "bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.accentPrimary,
     }),
   );
@@ -207,6 +242,7 @@ export async function generateGangCard({
       y: 25,
       fontSize: 10,
       fontStyle: "bold",
+      fontFamily: "space",
       fill: CARD_CONFIG.colors.textMuted,
       tracking: 1.5,
     }),
@@ -313,6 +349,7 @@ export async function generateGangCard({
         y: 56,
         fontSize: 18,
         fontStyle: "bold",
+        fontFamily: "space",
         fill: CARD_CONFIG.colors.textWhite,
         tracking: 1,
       }),
@@ -325,6 +362,7 @@ export async function generateGangCard({
         y: 78,
         fontSize: 10,
         fontStyle: "bold",
+        fontFamily: "inter",
         fill: CARD_CONFIG.colors.accentSecondary,
       }),
     );
@@ -359,6 +397,7 @@ export async function generateGangCard({
         y: 18,
         fontSize: 9,
         fontStyle: "bold",
+        fontFamily: "space",
         fill: CARD_CONFIG.colors.textMuted,
         tracking: 1,
       }),
@@ -371,6 +410,7 @@ export async function generateGangCard({
       y: 38,
       fontSize: 20,
       fontStyle: "bold",
+      fontFamily: "inter",
       fill: color || CARD_CONFIG.colors.textWhite,
     });
     g.add(mainVal);
@@ -382,6 +422,7 @@ export async function generateGangCard({
           x: 25 + mainVal.getTextWidth(), // Push text dynamically safely next to value width
           y: 44,
           fontSize: 11,
+          fontFamily: "inter",
           fontStyle: "bold",
           fill: color,
         }),

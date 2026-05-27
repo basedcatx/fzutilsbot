@@ -12,7 +12,6 @@ const event = {
   async execute(_: ClientWithCollection, interaction: Message) {
     if (!interaction.inGuild()) return;
     if (interaction.author.bot) return;
-
     if (interaction.type !== MessageType.Default) return;
     const author = interaction.guild.members.cache.get(interaction.author.id);
     if (!author) return;

@@ -1,323 +1,282 @@
-import Konva from "konva";
+import { CARD_CONFIG, loadFonts } from "./helper";
 import "konva/skia-backend";
-import { CARD_CONFIG, formatNumberWithK } from "./helper";
+loadFonts();
 
-const FIRST_RANKED_IMAGE_URL =
-  "https://cdn-icons-png.flaticon.com/128/2583/2583381.png";
-const SECOND_RANKED_IMAGE_URL =
-  "https://cdn-icons-png.flaticon.com/128/2374/2374861.png";
-const THIRD_RANKED_IMAGE_URL =
-  "https://cdn-icons-png.flaticon.com/128/2374/2374864.png";
-const GANG_MEDAL_ICON_URL =
-  "https://cdn-icons-png.flaticon.com/128/3176/3176294.png";
+import Konva from "konva";
+const { accentPrimary, accentSecondary, accentTertiary } = CARD_CONFIG.colors;
 
-export async function generateGangLeaderBoardCard(
-  leaderBoardData: { msgCount: number; name: string; avatarUrl: string }[],
-) {
-  const formatName = (name: string): string => {
-    const slength = 13;
-    const ncount = name.length;
-    if (ncount > slength) {
-      return name.substring(0, slength + 1) + "...";
-    }
-    return name;
-  };
+const CONFIG = {
+  width: CARD_CONFIG.dimensions.modalWidth,
+  height: 1450, // Just this once
+};
 
+// Initialize Stage and Main Layer
+export async function generateGangLeaderBoardCard({
+  gangs,
+}: {
+  gangs: {
+    name: string;
+    msgs: number;
+    avatarUrl: string | null;
+    rank: number;
+  }[];
+}) {
   const stage = new Konva.Stage({
-    width: CARD_CONFIG.dimensions.cardWidth,
-    height: CARD_CONFIG.dimensions.cardHeight,
+    width: CONFIG.width,
+    height: CONFIG.height,
   });
 
-  const layer = new Konva.Layer();
-  stage.add(layer);
+  const mainLayer = new Konva.Layer();
+  stage.add(mainLayer);
 
-  const mainCard = new Konva.Rect({
-    x: 0,
-    y: 0,
-    width: CARD_CONFIG.dimensions.cardWidth,
-    height: CARD_CONFIG.dimensions.cardHeight,
-    fill: CARD_CONFIG.colors.bgApp,
-    cornerRadius: 24,
+  // 1. Base Dark Card Frame
+  mainLayer.add(
+    new Konva.Rect({
+      width: CONFIG.width,
+      height: CONFIG.height,
+      fill: CARD_CONFIG.colors.bgApp,
+    }),
+  );
+
+  // Top-Left Neon Bracket
+  mainLayer.add(
+    new Konva.Path({
+      x: 25,
+      y: 25,
+      data: "M 0 20 L 0 0 L 20 0",
+      stroke: CARD_CONFIG.colors.accentPrimary,
+      strokeWidth: 2,
+    }),
+  );
+
+  // Bottom-Right Neon Bracket
+  mainLayer.add(
+    new Konva.Path({
+      x: CONFIG.width - 25,
+      y: CONFIG.height - 25,
+      data: "M 0 -20 L 0 0 L -20 0",
+      stroke: accentPrimary,
+      strokeWidth: 2,
+    }),
+  );
+
+  const headerGroup = new Konva.Group({ x: 60, y: 70 });
+
+  // Trophy Glow Effect Base
+  const trophy = new Konva.Text({
+    text: "🏆",
+    fontSize: 28,
+    shadowColor: accentTertiary,
+    shadowBlur: 15,
+    shadowOpacity: 1,
   });
 
-  layer.add(mainCard);
+  const titleText = new Konva.Text({
+    text: "GANG WEEKLY LEADERBOARD",
+    x: 55,
+    y: 2,
+    fontSize: 26,
+    fontStyle: "italic bold",
+    fill: CARD_CONFIG.colors.textWhite,
+    fontFamily: "space",
+  });
 
-  const podiumGroup = new Konva.Group({ x: 180, y: 150 });
-
-  async function createPodium(
-    rank: number,
-    name: string,
-    msgs: number,
-    xPos: number,
-    height: number,
-    avatarUrl: string,
-  ) {
-    const g = new Konva.Group({ x: xPos });
-
-    const cylinder = new Konva.Rect({
-      x: 0,
-      y: 180 - height,
-      width: 100,
-      height: height,
-      fill: CARD_CONFIG.colors.bgBadge,
-      opacity: 1,
-      cornerRadius: [10, 10, 0, 0],
-    });
-    g.add(cylinder);
-
-    await new Promise((resolve) => {
-      Konva.Image.fromURL(avatarUrl, function (img) {
-        const size = 55;
-        const radius = size / 2;
-
-        const imageGroup = new Konva.Group({
-          x: 24,
-          y: 123 - height,
-          width: size,
-          height: size,
-          clipFunc: (ctx) => {
-            ctx.arc(radius, radius, radius, Math.PI * 2, 0);
-          },
-        });
-
-        img.width(size);
-        img.height(size);
-
-        // 3. Nest your elements
-        imageGroup.add(img);
-        g.add(imageGroup);
-
-        resolve(0);
-      });
-    });
-
-    // Name Text
-    const nameTxt = new Konva.Text({
-      text: formatName(name),
-      x: -10,
-      y: 65 - height,
-      width: 120,
-      align: "center",
-      fontSize: 14,
+  // Countdown Clock Widget (Anchored right side)
+  const timerGroup = new Konva.Group({ x: CONFIG.width - 245 });
+  timerGroup.add(
+    new Konva.Text({
+      text: "Resets in a week",
+      y: 10,
+      fontSize: 16,
       fontStyle: "bold",
-      fill: CARD_CONFIG.colors.textWhite,
-    });
-
-    const xpPill = new Konva.Rect({
-      x: 15,
-      y: 85 - height,
-      width: 70,
-      height: 35,
-      cornerRadius: 10,
-      fill: CARD_CONFIG.colors.bgBadge,
-    });
-
-    const xpTxt = new Konva.Text({
-      text: `${msgs}K messages`,
-      x: 15,
-      y: 90 - height,
-      width: 70,
-      align: "center",
-      fontSize: 11,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.textWhite,
-    });
-
-    const getRankIcon = (): string => {
-      if (rank === 0) return FIRST_RANKED_IMAGE_URL;
-      if (rank === 1) return SECOND_RANKED_IMAGE_URL;
-      return THIRD_RANKED_IMAGE_URL;
-    };
-
-    await new Promise((resolve) => {
-      Konva.Image.fromURL(getRankIcon(), function (img) {
-        // 1. Create the container group
-        const size = 30;
-        const radius = size / 2;
-
-        const imageGroup = new Konva.Group({
-          x: 38,
-          y: 180 - height + 10,
-          width: size,
-          height: size,
-          clipFunc: (ctx) => {
-            ctx.arc(radius, radius, radius, Math.PI * 2, 0);
-          },
-        });
-
-        img.width(size);
-        img.height(size);
-
-        // 3. Nest your elements
-        imageGroup.add(img);
-        g.add(imageGroup);
-
-        resolve(0);
-      });
-    });
-
-    g.add(nameTxt, xpPill, xpTxt);
-    return g;
-  }
-
-  // Render 1st, 2nd, and 3rd place columns
-  const rank2 = await createPodium(
-    1,
-    leaderBoardData[1]!.name,
-    leaderBoardData[1]!.msgCount,
-    0,
-    100,
-    leaderBoardData[1]!.avatarUrl,
+      fill: accentPrimary,
+    }),
   );
 
-  const rank1 = await createPodium(
-    0,
-    leaderBoardData[0]!.name,
-    leaderBoardData[0]!.msgCount,
-    130,
-    140,
-    leaderBoardData[0]!.avatarUrl,
-  );
+  headerGroup.add(trophy, titleText, timerGroup);
+  mainLayer.add(headerGroup);
 
-  const rank3 = await createPodium(
-    2,
-    leaderBoardData[2]!.name,
-    leaderBoardData[2]!.msgCount,
-    260,
-    65,
-    leaderBoardData[2]!.avatarUrl,
-  );
+  const listGroup = new Konva.Group({ x: 75, y: 175 });
 
-  podiumGroup.add(rank2, rank1, rank3);
-  layer.add(podiumGroup);
-
-  // --- 3. Leaderboard List Rows Component ---
-  const listGroup = new Konva.Group({ x: 40, y: 360 });
-
-  async function createListRow(
+  async function createLeaderboardRow(
     yPos: number,
-    rank: number,
-    name: string,
-    nmsgs: number,
+    g: {
+      name: string;
+      msgs: number;
+      avatarUrl?: string;
+      rank: number;
+    },
   ) {
     const row = new Konva.Group({ x: 0, y: yPos });
+    const rowWidth = CONFIG.width - 130;
+    const rowHeight = 100;
+    const accentColor = g.rank === 1 ? accentTertiary : accentPrimary;
 
-    // Row background strip
-    const bg = new Konva.Rect({
-      width: 620,
-      height: 48,
-      fill: CARD_CONFIG.colors.bgBadge,
-      opacity: 0.8,
-    });
+    // Base Plate Background
+    row.add(
+      new Konva.Rect({
+        width: rowWidth,
+        height: rowHeight,
+        fill: g.rank === 1 ? accentTertiary : CARD_CONFIG.colors.bgBadge,
+        stroke:
+          g.rank === 1 ? "rgba(255, 210, 0, 0.15)" : "rgba(0, 210, 255, 0.03)",
+        strokeWidth: 1,
+        cornerRadius: 2,
+      }),
+    );
 
-    row.add(bg);
-    // Rank Bubble
-    const rankCircle = new Konva.Circle({
-      x: 25,
-      y: 24,
-      radius: 12,
-      fill: CARD_CONFIG.colors.bgBadge,
-      stroke: CARD_CONFIG.colors.accentPrimary,
-      strokeWidth: 1,
-    });
-    const rankTxt = new Konva.Text({
-      text: rank.toString(),
-      x: 15,
-      y: 19,
-      width: 20,
-      align: "center",
-      fontSize: 11,
-      fontStyle: "bold",
-      fill: CARD_CONFIG.colors.textWhite,
-    });
+    // Left-side Identity Status Line
+    row.add(
+      new Konva.Rect({
+        width: 5,
+        height: rowHeight,
+        fill: accentColor,
+      }),
+    );
 
-    await new Promise((resolve) => {
-      Konva.Image.fromURL(GANG_MEDAL_ICON_URL, function (img) {
-        const size = 25,
-          radius = size / 2;
+    // Rank String Text
+    row.add(
+      new Konva.Text({
+        text: g.rank.toLocaleString(),
+        x: 30,
+        y: 36,
+        fontSize: 24,
+        fontStyle: "italic bold",
+        fontFamily: "slab",
+        fill: g.rank === 1 ? accentTertiary : accentPrimary,
+      }),
+    );
 
-        const imageGroup = new Konva.Group({
-          x: 65,
-          y: 13,
-          width: size,
-          height: size,
-          clipFunc: (ctx) => {
-            ctx.arc(radius, radius, radius, Math.PI * 2, 0, false);
+    row.add(
+      new Konva.Text({
+        text: g.name.toUpperCase(),
+        x: 185,
+        y: 40,
+        fontSize: 20,
+        fontStyle: "italic bold",
+        fill: CARD_CONFIG.colors.textWhite,
+        fontFamily: "space",
+      }),
+    );
+
+    // Avatar Border Wrapper Box
+
+    if (g.avatarUrl) {
+      await new Promise<void>((resolve) => {
+        Konva.Image.fromURL(
+          g.avatarUrl!,
+          function (img) {
+            const radius = 66;
+            const imageGroup = new Konva.Group({
+              y: 50,
+              x: CARD_CONFIG.dimensions.modalWidth - radius * 2 - 50,
+              clipFunc: (c) => {
+                c.arc(radius, radius, radius, Math.PI * 2, 0, false);
+              },
+            });
+            img.width(radius * 2);
+            img.height(radius * 2);
+            imageGroup.add(img);
+            row.add(imageGroup);
+            resolve();
           },
-        });
-        img.width(size);
-        img.height(size);
-        imageGroup.add(img);
-        row.add(imageGroup);
-        resolve(0);
+          () => {
+            resolve();
+          },
+        );
       });
-    });
+    }
 
-    const nameTxt = new Konva.Text({
-      text: formatName(name),
-      x: 95,
-      y: 16,
-      fontSize: 15,
-      fill: CARD_CONFIG.colors.textWhite,
-    });
-    const xpTxt = new Konva.Text({
-      text: `${formatNumberWithK(nmsgs)} MSGS`,
-      x: 560,
-      y: 12,
-      width: 50,
-      align: "center",
-      fontSize: 13,
-      fontStyle: "italic",
-      fill: CARD_CONFIG.colors.accentPrimary,
-    });
+    row.add(
+      new Konva.Rect({
+        x: 90,
+        y: 15,
+        width: 70,
+        height: 70,
+        fill: "#13191E",
+        stroke: g.rank === 1 ? accentTertiary : "#1D272F",
+        strokeWidth: 1,
+        cornerRadius: 2,
+      }),
+    );
 
-    row.add(rankCircle, rankTxt, nameTxt, xpTxt);
+    // Quantitative Metric Value (Right-Aligned)
+    row.add(
+      new Konva.Text({
+        text: g.msgs.toLocaleString(),
+        x: rowWidth - 180,
+        y: 38,
+        width: 150,
+        align: "right",
+        fontSize: 24,
+        fontStyle: "bold",
+        fill: accentColor,
+        fontFamily: "Arial, Helvetica, sans-serif",
+      }),
+    );
+
     return row;
   }
 
-  for (let i = 0; i < leaderBoardData.slice(3).length; i++) {
-    const player = leaderBoardData[i]!;
-    const rowItem = await createListRow(
-      i * 54,
-      i + 4,
-      player.name,
-      player.msgCount,
-    );
+  for (let i = 0; i < Math.min(gangs.length, 10); i++) {
+    const it = gangs[i];
+    const rowItem = await createLeaderboardRow(i * 118, {
+      msgs: it?.msgs!,
+      name: it?.name!,
+      avatarUrl: it?.avatarUrl ?? undefined,
+      rank: it?.rank!,
+    });
     listGroup.add(rowItem);
   }
+  mainLayer.add(listGroup);
 
-  layer.add(listGroup);
-  layer.draw();
+  const footerGroup = new Konva.Group({ x: 60, y: CONFIG.height - 50 });
+  footerGroup.add(
+    new Konva.Text({
+      text: "SERVER_LOAD",
+      fontSize: 20,
+      y: -20,
+      fontStyle: "bold",
+      fill: CARD_CONFIG.colors.textMuted,
+      tracking: 0.5,
+    }),
+  );
 
-  return stage.toDataURL({ mimeType: "image/png", quality: 2 });
+  const totalServerMessages = gangs.reduce((curr, prev) => {
+    return curr + prev.msgs;
+  }, 0);
+
+  function calculateFill() {
+    if (totalServerMessages >= 9000) return 1;
+    if (totalServerMessages >= 10_000) return 2;
+    if (totalServerMessages >= 20_000) return 3;
+    return 0;
+  }
+
+  function createLightGrids() {
+    for (let i = 0; i < 4; i++) {
+      footerGroup.add(
+        new Konva.Rect({
+          x: 25 * i,
+          y: 10,
+          width: 20,
+          height: 14,
+          fill:
+            i <= calculateFill()
+              ? CARD_CONFIG.colors.accentPrimary
+              : CARD_CONFIG.colors.bgBadge,
+        }),
+      );
+    }
+  }
+
+  createLightGrids();
+  mainLayer.add(footerGroup);
+  mainLayer.draw();
+
+  return stage.toDataURL({
+    pixelRatio: 6,
+    imageSmoothingEnabled: true,
+    quality: 20,
+  });
 }
-
-const testLeaderBoardData = [
-  {
-    msgCount: 12345,
-    name: "ShadowStriker",
-    avatarUrl: "https://i.pravatar.cc/150?img=1", // Placeholder avatar
-  },
-  {
-    msgCount: 9876,
-    name: "NightHawk",
-    avatarUrl: "https://i.pravatar.cc/150?img=2",
-  },
-  {
-    msgCount: 5432,
-    name: "CrimsonViper",
-    avatarUrl: "https://i.pravatar.cc/150?img=3",
-  },
-  {
-    msgCount: 2100,
-    name: "GhostRider",
-    avatarUrl: "https://i.pravatar.cc/150?img=4",
-  },
-  {
-    msgCount: 875,
-    name: "DarkPhoenix",
-    avatarUrl: "https://i.pravatar.cc/150?img=5",
-  },
-];
-
-console.log(await generateGangLeaderBoardCard(testLeaderBoardData));

@@ -11,12 +11,18 @@ const event = {
     if (!interaction.inGuild()) return;
     let authorId = interaction.author?.id;
 
-    const temp = JSON.parse(
-      (await rdb.hGet(RedisStore.MessageEvent, interaction.id)) ??
-        '{author: "", type: 0}',
-    );
+    let temp;
+    try {
+      temp = JSON.parse(
+        (await rdb.hGet(RedisStore.MessageEvent, interaction.id)) ??
+          '{author: "", type: 0}',
+      );
+    } catch (err) {}
 
     if (!authorId) {
+      if (!temp) {
+        return;
+      }
       authorId = temp.author;
     }
 
@@ -34,6 +40,8 @@ const event = {
     if (!gang) return;
 
     if (!interaction.type) {
+      if (!temp) return;
+
       const type = temp.type;
       if (type !== MessageType.Default) return;
     } else {
@@ -41,7 +49,7 @@ const event = {
       if (interaction.type !== MessageType.Default) return;
     }
 
-    const value = Math.min(
+    const value = Math.max(
       (await rdb.zIncrBy(RedisStore.GangLeaderBoard, -1, gang.id)) ?? 0,
       0,
     );

@@ -1,6 +1,7 @@
 import {
   AttachmentBuilder,
   GuildMember,
+  MessageFlags,
   SlashCommandBuilder,
   type Interaction,
 } from "discord.js";
@@ -14,6 +15,7 @@ import { sql } from "drizzle-orm";
 import { toPNG } from "../../misc/helper";
 import { generateGangCard } from "../../misc/generateGangCard";
 import { RedisStore } from "../../misc/store";
+import { generateGangLeaderBoardCard } from "../../misc/generateGangLeaderBoardCard";
 
 const command = new SlashCommandBuilder()
   .setName("stats")
@@ -66,10 +68,12 @@ const cmd: SlashCommandType = {
         await interaction.reply({
           content:
             "You can use the /me command, to see your global (server-wide) message ranking",
+          flags: MessageFlags.Ephemeral,
         });
         return;
       }
-      return await handleGlobalGlobal(interaction, member);
+      await handleGlobalGlobal(interaction, member);
+      return;
     }
   },
 };
@@ -154,7 +158,7 @@ async function handleLocalPersonal(
     { name: "profile-card.png" },
   );
 
-  await interaction.reply({ files: [attachment] });
+  await interaction.editReply({ files: [attachment] });
   return;
 }
 
@@ -227,6 +231,7 @@ async function handleLocalGlobal(
       await generateGangCard({
         name: g.name,
         msgs,
+        avatarUrl: g.iconURL({ forceStatic: true, extension: "png" }),
         rank: rank ?? -1,
         gangs,
         nextInLine,
@@ -235,7 +240,7 @@ async function handleLocalGlobal(
     { name: "gang-card.png" },
   );
 
-  await interaction.reply({ files: [attachment] });
+  await interaction.editReply({ files: [attachment] });
 }
 
 async function handleGlobalGlobal(
@@ -243,6 +248,39 @@ async function handleGlobalGlobal(
   member: GuildMember,
 ) {
   if (!interaction.isChatInputCommand()) return;
+  await interaction.deferReply();
+
+  const res = await db
+    .select({
+      gangId: messageEventTable.userRole,
+      messageCount: sql<number>`sum(${messageEventTable.messageCount})`,
+    })
+    .from(messageEventTable)
+    .where(sql`date_trunc('week', created_at) = date_trunc('week', now())`)
+    .groupBy(messageEventTable.userRole);
+
+  const gangs = res.map((i) => {
+    const gang = interaction.guild?.roles.cache.get(i.gangId || "");
+    const rank = res.findIndex((it) => it.gangId === i.gangId);
+
+    return {
+      name: gang?.name ?? "N/A",
+      avatarUrl: gang?.iconURL({ extension: "png", forceStatic: true }) ?? null,
+      msgs: i.messageCount,
+      rank: Number(rank) ? Number(rank) + 1 : -1,
+    };
+  });
+
+  const attachment = new AttachmentBuilder(
+    toPNG(
+      await generateGangLeaderBoardCard({
+        gangs,
+      }),
+    ),
+    { name: "gang-weekly-leaderboard.png" },
+  );
+
+  return await interaction.editReply({ files: [attachment] });
 }
 
 export default cmd;
