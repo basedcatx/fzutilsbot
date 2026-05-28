@@ -1,30 +1,28 @@
-import { readdirSync } from "fs";
-import { pathToFileURL } from "node:url";
-import path from "node:path";
 import { REST, Routes } from "discord.js";
+import { readdirSync } from "node:fs";
+import path, { extname } from "node:path";
+import { pathToFileURL } from "node:url";
 import { BotConfig } from "./config";
 
-async function load_commands() {
-  const commands = [];
+const commands = [];
+async function loadCommands() {
+  const command_dirs = readdirSync(path.join(import.meta.dirname, "commands"), {
+    recursive: true,
+    withFileTypes: true,
+  });
 
-  const command_dirs = readdirSync(
-    pathToFileURL(path.join(__dirname, "commands")),
-    {
-      withFileTypes: true,
-      recursive: true,
-    },
-  );
+  for (const cmd of command_dirs) {
+    if (!cmd.isFile()) continue;
+    if (extname(cmd.name) !== ".ts") continue;
 
-  for (const command of command_dirs) {
-    if (command.isDirectory()) continue;
+    const fullPath = path.join(cmd.parentPath, cmd.name);
+    const fileUrl = pathToFileURL(fullPath).href;
 
-    const fullPath = pathToFileURL(path.join(command.parentPath, command.name));
-
-    const obj = await import(fullPath.href);
+    const command = await import(fileUrl);
 
     const {
       default: { name, description, execute },
-    } = obj;
+    } = command;
 
     if (!name || !description || !execute) {
       console.log(
@@ -33,23 +31,30 @@ async function load_commands() {
       continue;
     }
 
-    commands.push(obj.default);
+    commands.push(command.default);
   }
-
-  return commands;
 }
 
+await loadCommands();
 
 const rest = new REST().setToken(BotConfig.env.BOT_API_KEY);
 
-rest
-  .put(
+console.log(`Started refreshing ${commands.length} application (/) commands`);
+
+try {
+  const data = await rest.put(
     Routes.applicationGuildCommands(
       BotConfig.env.BOT_ID,
       BotConfig.guild.SUPPORT_SERVER_ID,
     ),
     {
-      body: await load_commands(),
+      //@ts-ignore
+      body: commands,
     },
-  )
-  .then((_) => console.log("All commands successfully registered"));
+  );
+  console.log(
+    `Succesfully reloaded ${(data as any[]).length} application (/) commands.`,
+  );
+} catch (err) {
+  console.error(err);
+}

@@ -30,6 +30,3 @@ export interface SlashCommandType {
   execute: (client: ClientWithCollection, interaction: any) => Promise<void>;
 }
 
-export const enum RedisStore {
-  MessageCount = "msgcount",
-}
