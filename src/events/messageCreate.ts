@@ -65,12 +65,19 @@ async function changeUserGang(id: string, newGangId: string) {
     .insert(messageEventTable)
     .values({
       userId: id,
-      userRole: newGangId,
       messageCount: 1,
     })
     .onConflictDoUpdate({
       target: [messageEventTable.userId, messageEventTable.createdAt],
       set: { messageCount: 1, userRole: newGangId },
+    });
+
+  await db
+    .insert(messageEventTable)
+    .values({ userRole: newGangId, userId: id })
+    .onConflictDoUpdate({
+      target: [messageEventTable.userId, messageEventTable.createdAt],
+      set: { userRole: newGangId },
     });
 }
 

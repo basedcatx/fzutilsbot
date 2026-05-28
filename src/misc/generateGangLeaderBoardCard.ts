@@ -1,4 +1,4 @@
-import { CARD_CONFIG, loadFonts } from "./helper";
+import { CARD_CONFIG, formatNumberWithK, loadFonts } from "./helper";
 import "konva/skia-backend";
 loadFonts();
 
@@ -62,42 +62,55 @@ export async function generateGangLeaderBoardCard({
 
   const headerGroup = new Konva.Group({ x: 60, y: 70 });
 
-  // Trophy Glow Effect Base
-  const trophy = new Konva.Text({
-    text: "🏆",
-    fontSize: 28,
-    shadowColor: accentTertiary,
-    shadowBlur: 15,
-    shadowOpacity: 1,
-  });
-
   const titleText = new Konva.Text({
     text: "GANG WEEKLY LEADERBOARD",
-    x: 55,
     y: 2,
+    x: 2,
     fontSize: 26,
     fontStyle: "italic bold",
     fill: CARD_CONFIG.colors.textWhite,
     fontFamily: "space",
   });
 
-  // Countdown Clock Widget (Anchored right side)
-  const timerGroup = new Konva.Group({ x: CONFIG.width - 245 });
-  timerGroup.add(
-    new Konva.Text({
-      text: "Resets in a week",
-      y: 10,
-      fontSize: 16,
-      fontStyle: "bold",
-      fill: accentPrimary,
+  const labelGroup = new Konva.Group({ x: 0, y: 50 });
+  labelGroup.add(
+    new Konva.Rect({
+      width: CONFIG.width - 125,
+      height: 70,
+      fill: CARD_CONFIG.colors.bgCardElevated,
     }),
   );
 
-  headerGroup.add(trophy, titleText, timerGroup);
+  labelGroup.add(
+    new Konva.Text({
+      text: "RANK",
+      x: 10,
+      y: 50,
+      rotation: -45,
+      fill: CARD_CONFIG.colors.textMuted,
+      fontSize: 24,
+      fontStyle: "bold",
+      fontFamily: "slab",
+    }),
+  );
+
+  labelGroup.add(
+    new Konva.Text({
+      text: "MSGS",
+      rotation: -45,
+      x: CONFIG.width - 125 - 80,
+      y: 50,
+      fontSize: 24,
+      fontStyle: "bold",
+      fontFamily: "slab",
+      fill: CARD_CONFIG.colors.textMuted,
+    }),
+  );
+
+  headerGroup.add(titleText, labelGroup);
   mainLayer.add(headerGroup);
 
-  const listGroup = new Konva.Group({ x: 75, y: 175 });
-
+  const listGroup = new Konva.Group({ x: 60, y: 200 });
   async function createLeaderboardRow(
     yPos: number,
     g: {
@@ -108,18 +121,21 @@ export async function generateGangLeaderBoardCard({
     },
   ) {
     const row = new Konva.Group({ x: 0, y: yPos });
-    const rowWidth = CONFIG.width - 130;
+    const rowWidth = CONFIG.width - 125;
     const rowHeight = 100;
-    const accentColor = g.rank === 1 ? accentTertiary : accentPrimary;
 
+    const accentColor =
+      g.rank === 1
+        ? accentTertiary
+        : g.rank === 2
+          ? accentSecondary
+          : accentPrimary;
     // Base Plate Background
     row.add(
       new Konva.Rect({
         width: rowWidth,
         height: rowHeight,
-        fill: g.rank === 1 ? accentTertiary : CARD_CONFIG.colors.bgBadge,
-        stroke:
-          g.rank === 1 ? "rgba(255, 210, 0, 0.15)" : "rgba(0, 210, 255, 0.03)",
+        fill: CARD_CONFIG.colors.bgBadge,
         strokeWidth: 1,
         cornerRadius: 2,
       }),
@@ -143,7 +159,7 @@ export async function generateGangLeaderBoardCard({
         fontSize: 24,
         fontStyle: "italic bold",
         fontFamily: "slab",
-        fill: g.rank === 1 ? accentTertiary : accentPrimary,
+        fill: accentColor,
       }),
     );
 
@@ -194,7 +210,6 @@ export async function generateGangLeaderBoardCard({
         width: 70,
         height: 70,
         fill: "#13191E",
-        stroke: g.rank === 1 ? accentTertiary : "#1D272F",
         strokeWidth: 1,
         cornerRadius: 2,
       }),
@@ -203,7 +218,7 @@ export async function generateGangLeaderBoardCard({
     // Quantitative Metric Value (Right-Aligned)
     row.add(
       new Konva.Text({
-        text: g.msgs.toLocaleString(),
+        text: formatNumberWithK(g.msgs),
         x: rowWidth - 180,
         y: 38,
         width: 150,

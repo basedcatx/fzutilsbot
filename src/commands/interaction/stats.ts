@@ -158,7 +158,7 @@ async function handleLocalPersonal(
     { name: "profile-card.png" },
   );
 
-  await interaction.editReply({ files: [attachment] });
+  await interaction.reply({ files: [attachment] });
   return;
 }
 
@@ -240,13 +240,10 @@ async function handleLocalGlobal(
     { name: "gang-card.png" },
   );
 
-  await interaction.editReply({ files: [attachment] });
+  await interaction.reply({ files: [attachment] });
 }
 
-async function handleGlobalGlobal(
-  interaction: Interaction,
-  member: GuildMember,
-) {
+async function handleGlobalGlobal(interaction: Interaction, _: GuildMember) {
   if (!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
 
@@ -257,7 +254,12 @@ async function handleGlobalGlobal(
     })
     .from(messageEventTable)
     .where(sql`date_trunc('week', created_at) = date_trunc('week', now())`)
-    .groupBy(messageEventTable.userRole);
+    .groupBy(messageEventTable.userRole)
+    .orderBy(sql`sum(${messageEventTable.messageCount}) desc`);
+
+  console.log("leaderboard", res);
+
+  console.log("leaderboard", res);
 
   const gangs = res.map((i) => {
     const gang = interaction.guild?.roles.cache.get(i.gangId || "");
@@ -267,7 +269,7 @@ async function handleGlobalGlobal(
       name: gang?.name ?? "N/A",
       avatarUrl: gang?.iconURL({ extension: "png", forceStatic: true }) ?? null,
       msgs: i.messageCount,
-      rank: Number(rank) ? Number(rank) + 1 : -1,
+      rank: isNaN(rank) ? -1 : Number(rank) + 1,
     };
   });
 
