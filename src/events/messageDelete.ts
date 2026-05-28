@@ -3,6 +3,7 @@ import { type ClientWithCollection } from "../types";
 import { RedisStore } from "../misc/store";
 import { db, rdb } from "../../db/db";
 import { messageEventTable } from "../../db/schema";
+import { sql } from "drizzle-orm";
 
 const event = {
   name: Events.MessageDelete,
@@ -15,7 +16,7 @@ const event = {
     try {
       temp = JSON.parse(
         (await rdb.hGet(RedisStore.MessageEvent, interaction.id)) ??
-          '{author: "", type: 0}',
+          '{"author": "", "type": 0}',
       );
     } catch (err) {}
 
@@ -60,11 +61,13 @@ const event = {
         .insert(messageEventTable)
         .values({
           userId: authorId,
-          messageCount: value,
+          messageCount: 0,
         })
         .onConflictDoUpdate({
           target: [messageEventTable.userId, messageEventTable.createdAt],
-          set: { messageCount: value },
+          set: {
+            messageCount: sql<number>`GREATEST(${messageEventTable.messageCount} - 1, 0)`,
+          },
         }),
     ]);
   },

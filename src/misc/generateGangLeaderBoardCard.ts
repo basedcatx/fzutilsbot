@@ -262,9 +262,9 @@ export async function generateGangLeaderBoardCard({
   }, 0);
 
   function calculateFill() {
-    if (totalServerMessages >= 9000) return 1;
-    if (totalServerMessages >= 10_000) return 2;
     if (totalServerMessages >= 20_000) return 3;
+    if (totalServerMessages >= 10_000) return 2;
+    if (totalServerMessages >= 5000) return 1;
     return 0;
   }
 

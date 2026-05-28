@@ -36,7 +36,7 @@ const event = {
 
     await rdb.zIncrBy(RedisStore.GangLeaderBoard, 1, gang.id);
     await rdb.set(RedisStore.Users(author.id), gang.id);
-    await rdb.expire(RedisStore.Users(author.id), ms("2 days"));
+    await rdb.expire(RedisStore.Users(author.id), ms("2 days") / 1000);
 
     try {
       await db

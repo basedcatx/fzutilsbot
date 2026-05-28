@@ -12,8 +12,8 @@ export const messageEventTable = t.pgTable(
     createdAt: t.date("created_at", { mode: "string" }).defaultNow(),
   },
   (ctx) => [
-    t.uniqueIndex("ui_user_id_date").on(ctx.userId, ctx.userRole),
-    t.index("user_id_idx").on(ctx.userRole),
+    t.uniqueIndex("ui_user_id_date").on(ctx.userId, ctx.createdAt),
+    t.index("user_id_idx").on(ctx.userId),
     t.index("user_role_idx").on(ctx.userRole),
   ],
 );
